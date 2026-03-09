@@ -1,6 +1,8 @@
+const { Op } = require('sequelize');
 const { getOffset } = require('../constants');
 const { utils } = require('../constants/utils');
 const { UserModel } = require('../models');
+const { buildUserWhereClause } = require('../utils/buildUserWhereClause');
 
 exports.createUser = async (req, res) => {
     try {
@@ -30,14 +32,17 @@ exports.createUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const { page = utils.page, limit = utils.limit } = req.query;
-        const specs = {
+        const whereClause = buildUserWhereClause(req.query);
+        const { page, limit } = req.query;
+
+        const querySpec = {
+            where: whereClause,
             attributes: { exclude: ['password'] },
             offset: getOffset(page, limit),
-            limit: parseInt(limit)
+            limit: page && limit ? parseInt(limit) : undefined
         }
 
-        const { count, rows: users } = await UserModel.findAndCountAll({ ...specs });
+        const { count, rows: users } = await UserModel.findAndCountAll({ ...querySpec });
 
         return res.status(200).json({
             status: true,
