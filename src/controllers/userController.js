@@ -80,7 +80,6 @@ exports.getUser = async (req, res) => {
     }
 };
 
-
 exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -117,4 +116,29 @@ exports.updateUser = async (req, res) => {
     }
 };
 
+exports.deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
 
+        const user = await UserModel.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: 'User not found!'
+            });
+        }
+
+        await user.destroy();
+
+        return res.status(200).json({
+            status: true,
+            message: 'User has been deleted successfully!'
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
+};
