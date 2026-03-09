@@ -31,20 +31,19 @@ exports.createUser = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
     try {
         const { page = utils.page, limit = utils.limit } = req.query;
-        // const specs = {
-        //     attributes: { exclude: ['password'] },
-        //     offset: getOffset(page, limit),
-        //     limit: parseInt(limit)
-        // }
+        const specs = {
+            attributes: { exclude: ['password'] },
+            offset: getOffset(page, limit),
+            limit: parseInt(limit)
+        }
 
-        // const { count, rows: users } = await UserModel.findAndCountAll({ ...specs });
-        const users = await UserModel.findAll();
+        const { count, rows: users } = await UserModel.findAndCountAll({ ...specs });
 
         return res.status(200).json({
             status: true,
             message: 'Users fetched successfully!',
             data: users,
-            total: users.length
+            total: count
         });
     } catch (error) {
         return res.status(500).json({
