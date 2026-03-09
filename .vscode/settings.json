@@ -1,0 +1,14 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.formatOnPaste": true,
+  "editor.formatOnSaveMode": "file",
+"editor.insertSpaces": true,
+"[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+}
+}
