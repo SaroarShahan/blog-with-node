@@ -1,6 +1,4 @@
-const { Op } = require('sequelize');
 const { getOffset } = require('../constants');
-const { utils } = require('../constants/utils');
 const { UserModel } = require('../models');
 const { buildUserWhereClause } = require('../utils/buildUserWhereClause');
 
