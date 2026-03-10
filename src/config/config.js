@@ -8,6 +8,8 @@ module.exports = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: process.env.DB_DIALECT,
-    logging: process.env.DB_LOGGING === 'true'
+    logging: process.env.DB_LOGGING === 'true',
+    jwtSecret: process.env.JWT_SECRET,
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN
   }
 };
