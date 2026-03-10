@@ -1,6 +1,6 @@
-import { Op } from "sequelize";
+const { Op } = require("sequelize");
 
-export const buildUserWhereClause = (query) => {
+const buildUserWhereClause = (query) => {
     const whereClause = {};
 
     if (query.email) {
@@ -35,3 +35,5 @@ export const buildUserWhereClause = (query) => {
 
     return whereClause;
 };
+
+module.exports = { buildUserWhereClause };
