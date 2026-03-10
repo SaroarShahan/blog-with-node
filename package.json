@@ -1,7 +1,7 @@
 {
   "name": "blog-with-node",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.js",
   "repository": "https://github.com/SaroarShahan/blog-with-node",
   "author": "SaroarShahan",
   "license": "MIT",
@@ -14,8 +14,10 @@
     "db:seed:undo": "sequelize-cli db:seed:undo:all"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "jose": "^6.2.1",
     "mysql2": "^3.19.1",
     "sequelize": "^6.37.8",
     "zod": "^4.3.6"
