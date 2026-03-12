@@ -82,9 +82,8 @@ comments.
 
 Demo accounts:
 
-- Admin: `admin@example.com` / `Admin1234`
-- User: `saroar@example.com` / `User1234`
-- User: `nabila@example.com` / `Editor1234`
+- Admin: `saroar.shahan@gmail.com` / `Admin@1234`
+- User: `kuddus@example.com` / `User@1234`
 
 ### 5. Start the server
 
