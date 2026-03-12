@@ -10,6 +10,6 @@ module.exports = {
     dialect: process.env.DB_DIALECT,
     logging: process.env.DB_LOGGING === 'true',
     jwtSecret: process.env.JWT_SECRET,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN
-  }
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN,
+  },
 };
