@@ -1,169 +1,369 @@
-const { PostModel, UserModel } = require('../models');
+const { Op } = require('sequelize');
+
+const { PostModel, UserModel, CategoryModel, TagModel, CommentModel } = require('../models');
 const { buildPostWhereClause } = require('../utils/buildPostWhereClause');
 const { getOffset } = require('../constants');
+const asyncHandler = require('../utils/asyncHandler');
+const urlSlugify = require('../utils');
 
-exports.createPost = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { title, shortContent, content } = req.body;
+exports.createPost = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { title, excerpt, content, status, categoryIds = [], tagIds = [] } = req.body;
 
-        if (!title || shortContent === '' || content === '') {
-            return res.status(400).json({
-                status: false,
-                message: 'Title, short content, content and user ID are required and cannot be empty'
-            });
-        }
+  let slug = urlSlugify(title);
 
-        const newPost = await PostModel.create({
-            title,
-            shortContent,
-            content,
-            userId
-        });
+  const existingPost = await PostModel.findOne({ where: { slug } });
 
-        res.status(201).json({
-            status: true,
-            message: 'Post has been created successfully!',
-            data: newPost
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error.message
-        });
-    }
-};
+  if (existingPost) {
+    slug = `${slug}-${Date.now()}`;
+  }
 
-exports.getAllPosts = async (req, res) => {
-    try {
-        const { page, limit } = req.query;
+  const post = await PostModel.create({
+    userId,
+    title,
+    slug,
+    excerpt,
+    content,
+    status: status ?? 'draft',
+    publishedAt: status === 'published' ? new Date() : null,
+  });
 
-        const filters = {
-            limit: limit ? parseInt(limit) : undefined,
-            offset: getOffset(page, limit)
-        }
-        const whereClause = buildPostWhereClause(req.query);
+  if (categoryIds.length) {
+    await post.setCategories(categoryIds);
+  }
 
+  if (tagIds.length) {
+    await post.setTags(tagIds);
+  }
 
-        const querySpec = {
-            where: whereClause,
-            include: [
+  const createdPost = await PostModel.findByPk(post.id, {
+    include: [
+      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
+      { model: CategoryModel, as: 'categories' },
+      { model: TagModel, as: 'tags' },
+    ],
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: 'Post created successfully',
+    data: createdPost,
+  });
+});
+
+exports.getAllPosts = asyncHandler(async (req, res) => {
+  const { page, limit } = req.query;
+  const { category, tag } = req.query;
+
+  const whereClause = buildPostWhereClause(req.query);
+
+  const querySpec = {
+    where: whereClause,
+    include: [
+      {
+        model: UserModel,
+        as: 'author',
+        attributes: ['id', 'username', 'email'],
+      },
+      {
+        model: CategoryModel,
+        as: 'categories',
+        ...(category ? { where: { name: category } } : {}),
+        through: { attributes: [] },
+      },
+      {
+        model: TagModel,
+        as: 'tags',
+        ...(tag ? { where: { name: tag } } : {}),
+        through: { attributes: [] },
+      },
+    ],
+    limit: limit ? parseInt(limit) : undefined,
+    offset: getOffset(page, limit),
+    distinct: true,
+    order: [['id', 'DESC']],
+  };
+
+  const { rows, count } = await PostModel.findAndCountAll({
+    ...querySpec,
+  });
+
+  res.json({
+    status: true,
+    message: 'Posts fetched successfully',
+    data: rows,
+    meta: {
+      total: count,
+      page: page ? +page : 1,
+      limit: limit ? +limit : count,
+      totalPage: limit ? Math.ceil(count / +limit) : 1,
+    },
+  });
+});
+
+exports.getPost = asyncHandler(async (req, res) => {
+  try {
+    const { idOrSlug } = req.params;
+    const userId = req.user.id;
+
+    const querySpec = {
+      include: [
+        {
+          model: UserModel,
+          as: 'author',
+          attributes: ['id', 'usernanme', 'email'],
+        },
+        {
+          model: CategoryModel,
+          as: 'categories',
+          through: { attributes: [] },
+        },
+        {
+          model: TagModel,
+          as: 'tags',
+          through: { attributes: [] },
+        },
+        {
+          model: CommentModel,
+          as: 'comments',
+          where: { parentCommentId: null },
+          required: false,
+          include: [
+            {
+              model: UserModel,
+              as: 'author',
+              attributes: ['id', 'username'],
+            },
+            {
+              model: CommentModel,
+              as: 'replies',
+              include: [
                 {
+                  model: UserModel,
+                  as: 'author',
+                  attributes: ['id', 'username'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const post = await PostModel.findOne({
+      where: {
+        [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
+      },
+      ...querySpec,
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        status: false,
+        message: 'Post not found!',
+      });
+    }
+
+    if (userId !== post.userId) {
+      await post.increment('viewCount');
+    }
+
+    res.json({
+      status: true,
+      message: 'Post fetched successfully',
+      data: post,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
+exports.updatePost = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+  const { title, excerpt, content, status, categoryIds, tagIds } = req.body;
+
+  const post = await PostModel.findOne({
+    where: {
+      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
+    },
+  });
+
+  if (!post) {
+    return res.status(404).json({
+      status: false,
+      message: 'Post not found!',
+    });
+  }
+
+  let newSlug = post.slug;
+
+  if (title && title !== post.title) {
+    newSlug = urlSlugify(title);
+
+    const existingSlug = await PostModel.findOne({
+      where: {
+        slug: newSlug,
+        id: { [Op.ne]: post.id },
+      },
+    });
+
+    if (existingSlug) {
+      newSlug = `${newSlug}-${Date.now()}`;
+    }
+  }
+
+  await post.update({
+    title: title ?? post.title,
+    slug: newSlug,
+    excerpt: excerpt ?? post.excerpt,
+    content: content ?? post.content,
+    status: status ?? post.status,
+    publishedAt: status === 'published' ? post.publishedAt || new Date() : post.publishedAt,
+  });
+
+  if (Array.isArray(categoryIds)) {
+    await post.setCategories(categoryIds);
+  }
+
+  if (Array.isArray(tagIds)) {
+    await post.setTags(tagIds);
+  }
+
+  const updatedPost = await PostModel.findByPk(post.id, {
+    include: [
+      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
+      { model: CategoryModel, as: 'categories', through: { attributes: [] } },
+      { model: TagModel, as: 'tags', through: { attributes: [] } },
+    ],
+  });
+
+  res.json({
+    status: true,
+    message: 'Post updated successfully',
+    data: updatedPost,
+  });
+});
+
+exports.deletePost = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+
+  const post = await PostModel.findOne({
+    where: {
+      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
+    },
+  });
+
+  if (!post) {
+    return res.status(404).json({
+      status: false,
+      message: 'Post not found!',
+    });
+  }
+
+  await post.destroy();
+
+  res.json({
+    status: true,
+    message: 'Post has been deleted successfully!',
+  });
+});
+
+exports.getPostsByCategory = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+
+  const category = await CategoryModel.findOne({
+    where: {
+      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
+    },
+    include: [
+      {
+        model: PostModel,
+        as: 'posts',
+        through: { attributes: [] },
+        include: [
+          {
+            model: UserModel,
+            as: 'author',
+            attributes: ['id', 'name', 'username'],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!category) {
+    return res.status(404).json({
+      success: false,
+      message: 'Category not found',
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: category.posts,
+  });
+});
+
+exports.getCategoryWithPosts = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+
+  const category = await CategoryModel.findOne({
+    where: {
+      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
+    },
+    include: [
+      {
+        model: PostModel,
+        as: 'posts',
+        through: { attributes: [] },
+        include: [
+          {
+            model: UserModel,
+            as: 'author',
+            attributes: ['id', 'name', 'username'],
+          },
+          {
+            model: CommentModel,
+            as: 'comments',
+            attributes: ['id', 'content', 'createdAt'],
+            where: { parentCommentId: null },
+            required: false,
+            include: [
+              {
+                model: UserModel,
+                as: 'author',
+                attributes: ['id', 'username'],
+              },
+              {
+                model: CommentModel,
+                as: 'replies',
+                include: [
+                  {
                     model: UserModel,
                     as: 'author',
-                    attributes: ['id', 'firstName', 'lastName']
-                }
+                    attributes: ['id', 'username'],
+                  },
+                ],
+              },
             ],
-            ...filters,
-        };
+          },
+        ],
+      },
+    ],
+  });
 
-        const posts = await PostModel.findAndCountAll(querySpec);
+  if (!category) {
+    return res.status(404).json({
+      success: false,
+      message: 'Category not found',
+    });
+  }
 
-        res.json({
-            status: true,
-            message: 'Posts fetched successfully',
-            data: posts.rows,
-            total: posts.count
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error.message,
-        });
-
-    }
-};
-
-exports.getPost = async (req, res) => {
-    const postId = req.params.id;
-
-    try {
-        const post = await PostModel.findByPk(postId, {
-            include: [
-                {
-                    model: UserModel,
-                    as: 'author',
-                    attributes: ['id', 'firstName', 'lastName']
-                }
-            ]
-        });
-
-        if (!post) {
-            return res.status(404).json({
-                status: false,
-                message: 'Post not found!'
-            });
-        }
-
-        res.json({
-            status: true,
-            message: 'Post fetched successfully',
-            data: post
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error.message,
-        });
-    }
-};
-
-exports.updatePost = async (req, res) => {
-    const postId = req.params.id;
-    const { title, shortContent, content } = req.body;
-
-    try {
-        const post = await PostModel.findByPk(postId);
-
-        if (!post) {
-            return res.status(404).json({
-                status: false,
-                message: 'Post not found!'
-            });
-        }
-
-        await post.update({
-            title,
-            shortContent,
-            content
-        });
-
-        res.json({
-            status: true,
-            message: 'Post updated successfully',
-            data: post
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error.message
-        });
-    }
-};
-
-exports.deletePost = async (req, res) => {
-    const postId = req.params.id;
-
-    try {
-        const post = await PostModel.findByPk(postId);
-
-        if (!post) {
-            return res.status(404).json({
-                status: false,
-                message: 'Post not found!'
-            });
-        }
-
-        await post.destroy();
-
-        res.json({
-            status: true,
-            message: 'Post has been deleted successfully!'
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error.message
-        });
-    }
-};
+  return res.json({
+    success: true,
+    data: category,
+  });
+});

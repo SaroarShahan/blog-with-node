@@ -1,66 +1,96 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class PostModel extends Model {
     static associate(models) {
-      models.UserModel.hasMany(models.PostModel, {
-        foreignKey: "userId",
-        as: "posts"
-      });
       models.PostModel.belongsTo(models.UserModel, {
-        foreignKey: "userId",
-        as: "author"
+        foreignKey: 'userId',
+        as: 'author',
+      });
+      models.PostModel.hasMany(models.CommentModel, {
+        foreignKey: 'postId',
+        as: 'comments',
+      });
+      models.PostModel.belongsToMany(models.CategoryModel, {
+        through: models.PostCategoryModel,
+        foreignKey: 'postId',
+        otherKey: 'categoryId',
+        as: 'categories',
+      });
+      models.PostModel.belongsToMany(models.TagModel, {
+        through: models.PostTagModel,
+        foreignKey: 'postId',
+        otherKey: 'tagId',
+        as: 'tags',
       });
     }
   }
 
   PostModel.init(
     {
-      title: {
-        type: DataTypes.STRING,
-        field: "title",
-        allowNull: false
+      id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
       },
-      shortContent: {
+      title: {
+        type: DataTypes.STRING(200),
+        field: 'title',
+        allowNull: false,
+      },
+      slug: {
+        type: DataTypes.STRING(220),
+        field: 'slug',
+        allowNull: false,
+        unique: true,
+      },
+      excerpt: {
         type: DataTypes.TEXT,
-        field: "short_content",
-        allowNull: true
+        field: 'excerpt',
+        allowNull: true,
       },
       content: {
-        type: DataTypes.TEXT("long"),
-        field: "content",
-        allowNull: true
+        type: DataTypes.TEXT('long'),
+        field: 'content',
+        allowNull: false,
       },
       userId: {
-        type: DataTypes.INTEGER,
-        field: "user_id",
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'user_id',
         allowNull: false,
         references: {
-          model: "users",
-          key: "id"
+          model: 'users',
+          key: 'id',
         },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE"
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
-      createdAt: {
-        allowNull: false,
-        field: "created_at",
-        type: DataTypes.DATE
+      status: {
+        type: DataTypes.ENUM('draft', 'published', 'archived'),
+        field: 'status',
+        defaultValue: 'draft',
       },
-      updatedAt: {
+      viewCount: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        field: 'view_count',
+        defaultValue: 0,
         allowNull: false,
-        field: "updated_at",
-        type: DataTypes.DATE
-      }
+      },
+      publishedAt: {
+        type: DataTypes.DATE,
+        field: 'published_at',
+        allowNull: true,
+      },
     },
     {
       sequelize,
-      modelName: "PostModel",
-      tableName: "posts",
-      timestamps: true
-    }
+      modelName: 'PostModel',
+      tableName: 'posts',
+      timestamps: true,
+      underscored: true,
+    },
   );
 
   return PostModel;

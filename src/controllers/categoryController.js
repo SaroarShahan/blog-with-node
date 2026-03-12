@@ -85,16 +85,24 @@ exports.updateCategory = asyncHandler(async (req, res) => {
     });
   }
 
-  let existingSlug = category.slug;
+  let newSlug = category.slug;
 
   if (name && name !== category.name) {
-    existingSlug = urlSlugify(name);
+    newSlug = urlSlugify(name);
+
+    const existingSlug = await CategoryModel.findOne({
+      where: { slug: newSlug, id: { [Op.ne]: category.id } },
+    });
+
+    if (existingSlug) {
+      newSlug = `${newSlug}-${Date.now()}`;
+    }
   }
 
   await category.update({
     name: name ?? category.name,
     description: description ?? category.description,
-    slug: existingSlug,
+    slug: newSlug,
   });
 
   return res.json({

@@ -1,11 +1,22 @@
 const express = require('express');
 
-const postController = require('../controllers/postController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware');
+const {
+  createPost,
+  getAllPosts,
+  getPost,
+  updatePost,
+  deletePost,
+} = require('../controllers/postController');
 
 const router = express.Router();
 
-router.route('/').post([authenticateToken, postController.createPost]).get(postController.getAllPosts);
-router.route('/:id').get(postController.getPost).patch([authenticateToken, postController.updatePost]).delete([authenticateToken, postController.deletePost]);
+router.route('/').post([authenticateToken], createPost).get(getAllPosts);
+
+router
+  .route('/:idOrSlug')
+  .get(getPost)
+  .patch([authenticateToken], updatePost)
+  .delete([authenticateToken], deletePost);
 
 module.exports = router;

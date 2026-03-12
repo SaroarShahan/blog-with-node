@@ -7,6 +7,7 @@ const postRoutes = require('./routes/postRoutes');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const tagRoutes = require('./routes/tagRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 function createApp() {
   const app = express();
@@ -19,6 +20,7 @@ function createApp() {
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/categories', categoryRoutes);
   app.use('/api/v1/tags', tagRoutes);
+  app.use('/api/v1/comments', commentRoutes);
 
   app.get('/health', (req, res) => {
     res.json({

@@ -1,19 +1,22 @@
 const express = require('express');
 
-const tagController = require('../controllers/tagController');
 const { authenticateToken, isAdmin } = require('../middleware');
+const {
+  createTag,
+  getAllTags,
+  getTag,
+  updateTag,
+  deleteTag,
+} = require('../controllers/tagController');
 
 const router = express.Router();
 
-router
-  .route('/')
-  .post([authenticateToken, isAdmin, tagController.createTag])
-  .get(tagController.getAllTags);
+router.route('/').post([authenticateToken, isAdmin], createTag).get(getAllTags);
 
 router
   .route('/:idOrSlug')
-  .get(tagController.getTag)
-  .patch([authenticateToken, isAdmin, tagController.updateTag])
-  .delete([authenticateToken, isAdmin, tagController.deleteTag]);
+  .get(getTag)
+  .patch([authenticateToken, isAdmin], updateTag)
+  .delete([authenticateToken, isAdmin], deleteTag);
 
 module.exports = router;

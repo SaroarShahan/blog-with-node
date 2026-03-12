@@ -1,66 +1,74 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class UserModel extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+      models.UserModel.hasOne(models.ProfileModel, {
+        foreignKey: 'userId',
+        as: 'profile',
+      });
+      models.UserModel.hasMany(models.PostModel, {
+        foreignKey: 'userId',
+        as: 'posts',
+      });
+      models.UserModel.hasMany(models.CommentModel, {
+        foreignKey: 'userId',
+        as: 'comments',
+      });
     }
   }
 
-  UserModel.init({
-    firstName: {
-      type: DataTypes.STRING,
-      field: 'first_name',
-      allowNull: false
+  UserModel.init(
+    {
+      id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      username: {
+        type: DataTypes.STRING(50),
+        field: 'username',
+        allowNull: false,
+        unique: true,
+      },
+      email: {
+        type: DataTypes.STRING(100),
+        field: 'email',
+        allowNull: false,
+        unique: true,
+      },
+      password: {
+        type: DataTypes.STRING(255),
+        field: 'password',
+        allowNull: false,
+      },
+      gender: {
+        type: DataTypes.ENUM('male', 'female', 'other'),
+        field: 'gender',
+        allowNull: false,
+      },
+      role: {
+        type: DataTypes.ENUM('user', 'admin'),
+        field: 'role',
+        defaultValue: 'user',
+      },
+      status: {
+        type: DataTypes.ENUM('active', 'inactive', 'blocked'),
+        field: 'status',
+        defaultValue: 'active',
+      },
     },
-    lastName: {
-      type: DataTypes.STRING,
-      field: 'last_name',
-      allowNull: false
+    {
+      sequelize,
+      modelName: 'UserModel',
+      tableName: 'users',
+      timestamps: true,
+      underscored: true,
+      paranoid: true,
     },
-    email: {
-      type: DataTypes.STRING,
-      field: 'email',
-      allowNull: false,
-      unique: true
-    },
-    password: {
-      type: DataTypes.STRING,
-      field: 'password',
-      allowNull: false
-    },
-    gender: {
-      type: DataTypes.STRING,
-      field: 'gender'
-    },
-    role: {
-      type: DataTypes.STRING,
-      field: 'role',
-      defaultValue: 'user'
-    },
-    createdAt: {
-      allowNull: false,
-      field: 'created_at',
-      type: DataTypes.DATE
-    },
-    updatedAt: {
-      allowNull: false,
-      field: 'updated_at',
-      type: DataTypes.DATE
-    }
-  }, {
-    sequelize,
-    modelName: 'UserModel',
-    tableName: 'users',
-    timestamps: true,
-  });
+  );
 
   return UserModel;
 };
