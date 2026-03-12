@@ -53,7 +53,7 @@ yarn install
 Copy `.env.example` to `.env` and fill in your database and JWT values.
 
 ```env
-DB_NAME=learning_sequelize
+DB_NAME=blog
 DB_USER=
 DB_PASSWORD=
 DB_HOST=
