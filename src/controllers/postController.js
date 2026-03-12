@@ -104,14 +104,14 @@ exports.getAllPosts = asyncHandler(async (req, res) => {
 exports.getPost = asyncHandler(async (req, res) => {
   try {
     const { idOrSlug } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const querySpec = {
       include: [
         {
           model: UserModel,
           as: 'author',
-          attributes: ['id', 'usernanme', 'email'],
+          attributes: ['id', 'username', 'email'],
         },
         {
           model: CategoryModel,
