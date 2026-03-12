@@ -40,6 +40,7 @@ exports.getAllCategories = asyncHandler(async (req, res) => {
 
   return res.json({
     success: true,
+    message: 'fetched successfully',
     data: categories,
   });
 });
