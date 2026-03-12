@@ -1,15 +1,27 @@
-const { Op } = require("sequelize");
+const { Op } = require('sequelize');
 
-const buildPostWhereClause = (query) => {
-    const whereClause = {};
+const buildPostWhereClause = ({ status, title, search }) => {
+  const whereClause = {};
 
-    if (query.title) {
-        whereClause.title = {
-            [Op.like]: `%${query.title}%`
-        };
-    }
+  if (status) {
+    whereClause.status = status;
+  }
 
-    return whereClause;
+  if (title) {
+    whereClause.title = {
+      [Op.like]: `%${title}%`,
+    };
+  }
+
+  if (search) {
+    whereClause[Op.or] = [
+      { title: { [Op.like]: `%${search}%` } },
+      { content: { [Op.like]: `%${search}%` } },
+      { excerpt: { [Op.like]: `%${search}%` } },
+    ];
+  }
+
+  return whereClause;
 };
 
 module.exports = { buildPostWhereClause };
