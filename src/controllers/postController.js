@@ -57,29 +57,35 @@ exports.getAllPosts = asyncHandler(async (req, res) => {
   const whereClause = buildPostWhereClause(req.query);
 
   const querySpec = {
+    distinct: true,
     where: whereClause,
     include: [
       {
         model: UserModel,
         as: 'author',
+        where: {
+          status: 'active',
+        },
         attributes: ['id', 'username', 'email'],
+        required: true,
       },
       {
         model: CategoryModel,
         as: 'categories',
-        ...(category ? { where: { name: category } } : {}),
+        where: category ? { name: category } : undefined,
         through: { attributes: [] },
+        required: !!category,
       },
       {
         model: TagModel,
         as: 'tags',
-        ...(tag ? { where: { name: tag } } : {}),
+        where: tag ? { name: tag } : undefined,
         through: { attributes: [] },
+        required: !!tag,
       },
     ],
     limit: limit ? parseInt(limit) : undefined,
     offset: getOffset(page, limit),
-    distinct: true,
     order: [['id', 'DESC']],
   };
 
