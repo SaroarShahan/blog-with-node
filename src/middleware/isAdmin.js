@@ -1,5 +1,7 @@
+const { USER_ROLES } = require('../constants');
+
 exports.isAdmin = (req, res, next) => {
-  if (req.user?.role === 'admin') {
+  if (req.user?.role === USER_ROLES.ADMIN) {
     return next();
   }
 

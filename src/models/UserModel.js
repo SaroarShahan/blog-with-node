@@ -1,5 +1,6 @@
 'use strict';
 const { Model } = require('sequelize');
+const { USER_ROLES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
   class UserModel extends Model {
@@ -50,9 +51,9 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       role: {
-        type: DataTypes.ENUM('user', 'admin'),
+        type: DataTypes.ENUM(USER_ROLES.USER, USER_ROLES.ADMIN),
         field: 'role',
-        defaultValue: 'user',
+        defaultValue: USER_ROLES.USER,
       },
       status: {
         type: DataTypes.ENUM('active', 'inactive', 'blocked'),
