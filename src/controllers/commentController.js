@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
-const { CommentModel, UserModel } = require('../models');
+const { CommentModel, UserModel, PostModel } = require('../models');
+const { canEdit, canDelete } = require('../utils/authorization');
 
 exports.createComment = asyncHandler(async (req, res) => {
   const { postId, parentCommentId, content } = req.body;
@@ -70,8 +71,6 @@ exports.getCommentsByPost = asyncHandler(async (req, res) => {
 exports.updateComment = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { content, status } = req.body;
-  const userId = req.user.id;
-
   const comment = await CommentModel.findByPk(id);
 
   if (!comment) {
@@ -81,7 +80,9 @@ exports.updateComment = asyncHandler(async (req, res) => {
     });
   }
 
-  if (comment.userId !== userId) {
+  const canEditResult = canEdit(req.user, comment.userId);
+
+  if (!canEditResult) {
     return res.status(403).json({
       success: false,
       message: 'You are not authorized to update this comment',
@@ -102,8 +103,6 @@ exports.updateComment = asyncHandler(async (req, res) => {
 
 exports.deleteComment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id;
-
   const comment = await CommentModel.findByPk(id);
 
   if (!comment) {
@@ -113,7 +112,13 @@ exports.deleteComment = asyncHandler(async (req, res) => {
     });
   }
 
-  if (comment.userId !== userId) {
+  const post = await PostModel.findByPk(comment.postId, {
+    attributes: ['id', 'userId'],
+  });
+
+  const canDeleteResult = canDelete(req.user, [comment.userId, post?.userId].filter(Boolean));
+
+  if (!canDeleteResult) {
     return res.status(403).json({
       success: false,
       message: 'You are not authorized to delete this comment',

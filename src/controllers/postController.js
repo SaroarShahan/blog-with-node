@@ -4,6 +4,7 @@ const { PostModel, UserModel, CategoryModel, TagModel, CommentModel } = require(
 const { buildPostWhereClause } = require('../utils/buildPostWhereClause');
 const { getOffset } = require('../constants');
 const asyncHandler = require('../utils/asyncHandler');
+const { canEdit, canDelete } = require('../utils/authorization');
 const urlSlugify = require('../utils');
 
 exports.createPost = asyncHandler(async (req, res) => {
@@ -189,7 +190,6 @@ exports.getPost = asyncHandler(async (req, res) => {
 exports.updatePost = asyncHandler(async (req, res) => {
   const { idOrSlug } = req.params;
   const { title, excerpt, content, status, categoryIds, tagIds } = req.body;
-
   const post = await PostModel.findOne({
     where: {
       [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
@@ -200,6 +200,15 @@ exports.updatePost = asyncHandler(async (req, res) => {
     return res.status(404).json({
       status: false,
       message: 'Post not found!',
+    });
+  }
+
+  const canEditResult = canEdit(req.user, post.userId);
+
+  if (!canEditResult) {
+    return res.status(403).json({
+      status: false,
+      message: 'You are not authorized to edit this post',
     });
   }
 
@@ -254,7 +263,6 @@ exports.updatePost = asyncHandler(async (req, res) => {
 
 exports.deletePost = asyncHandler(async (req, res) => {
   const { idOrSlug } = req.params;
-
   const post = await PostModel.findOne({
     where: {
       [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
@@ -265,6 +273,15 @@ exports.deletePost = asyncHandler(async (req, res) => {
     return res.status(404).json({
       status: false,
       message: 'Post not found!',
+    });
+  }
+
+  const canDeleteResult = canDelete(req.user, post.userId);
+
+  if (!canDeleteResult) {
+    return res.status(403).json({
+      status: false,
+      message: 'You are not authorized to delete this post',
     });
   }
 
