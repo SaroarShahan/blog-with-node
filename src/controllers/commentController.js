@@ -1,5 +1,3 @@
-const { Op } = require('sequelize');
-
 const asyncHandler = require('../utils/asyncHandler');
 const { CommentModel, UserModel } = require('../models');
 
@@ -41,6 +39,8 @@ exports.getCommentsByPost = asyncHandler(async (req, res) => {
         model: UserModel,
         as: 'author',
         attributes: ['id', 'username'],
+        where: { status: 'active' },
+        required: true,
       },
       {
         model: CommentModel,
@@ -50,8 +50,11 @@ exports.getCommentsByPost = asyncHandler(async (req, res) => {
             model: UserModel,
             as: 'author',
             attributes: ['id', 'username'],
+            where: { status: 'active' },
+            required: true,
           },
         ],
+        required: false,
       },
     ],
     order: [['id', 'DESC']],
