@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { CommentModel, UserModel, PostModel } = require('../models');
+const { AUTHORIZATION_POLICIES } = require('../constants');
 const { canEdit, canDelete } = require('../utils/authorization');
 
 exports.createComment = asyncHandler(async (req, res) => {
@@ -80,7 +81,7 @@ exports.updateComment = asyncHandler(async (req, res) => {
     });
   }
 
-  const canEditResult = canEdit(req.user, comment.userId);
+  const canEditResult = canEdit(req.user, comment.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
 
   if (!canEditResult) {
     return res.status(403).json({
@@ -116,7 +117,11 @@ exports.deleteComment = asyncHandler(async (req, res) => {
     attributes: ['id', 'userId'],
   });
 
-  const canDeleteResult = canDelete(req.user, [comment.userId, post?.userId].filter(Boolean));
+  const canDeleteResult = canDelete(
+    req.user,
+    [comment.userId, post?.userId].filter(Boolean),
+    AUTHORIZATION_POLICIES.OWNER_OR_ADMIN,
+  );
 
   if (!canDeleteResult) {
     return res.status(403).json({

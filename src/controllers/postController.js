@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 
 const { PostModel, UserModel, CategoryModel, TagModel, CommentModel } = require('../models');
 const { buildPostWhereClause } = require('../utils/buildPostWhereClause');
-const { getOffset } = require('../constants');
+const { AUTHORIZATION_POLICIES, getOffset } = require('../constants');
 const asyncHandler = require('../utils/asyncHandler');
 const { canEdit, canDelete } = require('../utils/authorization');
 const urlSlugify = require('../utils');
@@ -203,7 +203,7 @@ exports.updatePost = asyncHandler(async (req, res) => {
     });
   }
 
-  const canEditResult = canEdit(req.user, post.userId);
+  const canEditResult = canEdit(req.user, post.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
 
   if (!canEditResult) {
     return res.status(403).json({
@@ -276,7 +276,7 @@ exports.deletePost = asyncHandler(async (req, res) => {
     });
   }
 
-  const canDeleteResult = canDelete(req.user, post.userId);
+  const canDeleteResult = canDelete(req.user, post.userId, AUTHORIZATION_POLICIES.OWNER_OR_ADMIN);
 
   if (!canDeleteResult) {
     return res.status(403).json({
