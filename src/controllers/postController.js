@@ -52,13 +52,15 @@ exports.createPost = asyncHandler(async (req, res) => {
 });
 
 exports.getAllPosts = asyncHandler(async (req, res) => {
-  const { page, limit } = req.query;
-  const { category, tag } = req.query;
+  const { page, limit, category, tag, status = 'published' } = req.query;
 
   const whereClause = buildPostWhereClause(req.query);
 
   const querySpec = {
-    where: whereClause,
+    where: {
+      ...whereClause,
+      status,
+    },
     include: [
       {
         model: UserModel,
