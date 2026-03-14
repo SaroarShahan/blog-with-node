@@ -1,4 +1,7 @@
 const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const compression = require('compression');
 
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -11,6 +14,30 @@ const commentRoutes = require('./routes/commentRoutes');
 
 function createApp() {
   const app = express();
+
+  const allowedOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const corsOptions = {
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (!allowedOrigins.length) {
+        return callback(null, process.env.NODE_ENV !== 'production');
+      }
+
+      return callback(null, allowedOrigins.includes(origin));
+    },
+    credentials: true,
+  };
+
+  app.use(helmet());
+  app.use(cors(corsOptions));
+  app.use(compression());
 
   app.use(express.json());
 
