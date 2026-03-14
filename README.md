@@ -18,6 +18,8 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 - Role-based admin middleware
 - Posts with categories and tags
 - Nested comments support
+- Author-only post updates and admin-enabled post deletes
+- Comment moderation by admin, comment author, or post author
 - Sequelize migrations and seeders
 
 ## Project Structure
@@ -124,43 +126,43 @@ Base URL: `/api/v1`
 
 ### Users
 
-- `GET /users/:userId/posts`
-- `POST /users`
-- `GET /users`
-- `GET /users/:id`
-- `PATCH /users/:id`
-- `DELETE /users/:id`
+- `GET /users/:userId/posts` (authenticated, admin only)
+- `POST /users` (authenticated, admin only)
+- `GET /users` (authenticated, admin only)
+- `GET /users/:id` (authenticated, admin only)
+- `PATCH /users/:id` (authenticated, admin only)
+- `DELETE /users/:id` (authenticated, admin only)
 
 ### Posts
 
-- `POST /posts`
+- `POST /posts` (authenticated)
 - `GET /posts`
 - `GET /posts/:idOrSlug`
-- `PATCH /posts/:idOrSlug`
-- `DELETE /posts/:idOrSlug`
+- `PATCH /posts/:idOrSlug` (post author only)
+- `DELETE /posts/:idOrSlug` (post author or admin)
 
 ### Categories
 
-- `POST /categories`
-- `GET /categories`
-- `GET /categories/:idOrSlug`
-- `PATCH /categories/:idOrSlug`
-- `DELETE /categories/:idOrSlug`
+- `POST /categories` (authenticated, admin only)
+- `GET /categories` (authenticated, admin only)
+- `GET /categories/:idOrSlug` (authenticated, admin only)
+- `PATCH /categories/:idOrSlug` (authenticated, admin only)
+- `DELETE /categories/:idOrSlug` (authenticated, admin only)
 
 ### Tags
 
-- `POST /tags`
-- `GET /tags`
-- `GET /tags/:idOrSlug`
-- `PATCH /tags/:idOrSlug`
-- `DELETE /tags/:idOrSlug`
+- `POST /tags` (authenticated, admin only)
+- `GET /tags` (authenticated, admin only)
+- `GET /tags/:idOrSlug` (authenticated, admin only)
+- `PATCH /tags/:idOrSlug` (authenticated, admin only)
+- `DELETE /tags/:idOrSlug` (authenticated, admin only)
 
 ### Comments
 
-- `POST /comments`
-- `GET /comments/:postId`
-- `PATCH /comments/:id`
-- `DELETE /comments/:id`
+- `POST /comments` (authenticated)
+- `GET /comments/:postId` (authenticated)
+- `PATCH /comments/:id` (comment author only)
+- `DELETE /comments/:id` (admin, comment author, or post author)
 
 ## Health Check
 
@@ -169,5 +171,10 @@ Base URL: `/api/v1`
 ## Notes
 
 - Protected routes require an `Authorization: Bearer <token>` header.
-- Category and tag management routes are guarded by admin middleware.
+- User management routes are authenticated and admin-only.
+- Category and tag management routes are authenticated and admin-only.
+- Post updates are allowed only for the post author.
+- Post deletes are allowed for the post author or an admin.
+- Comment updates are allowed only for the comment author.
+- Comment deletes are allowed for an admin, the comment author, or the author of the parent post.
 - Database connection is verified during server startup before the app begins listening.
