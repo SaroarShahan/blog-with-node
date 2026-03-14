@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateToken, isAdmin } = require('../middleware');
+const { authenticateToken, isAdmin, validate } = require('../middleware');
 const {
   createCategory,
   getAllCategories,
@@ -7,15 +7,24 @@ const {
   updateCategory,
   deleteCategory,
 } = require('../controllers/categoryController');
+const {
+  createCategorySchema,
+  deleteCategorySchema,
+  getCategorySchema,
+  updateCategorySchema,
+} = require('../validations/categoryValidation');
 
 const router = express.Router();
 
-router.route('/').post([authenticateToken, isAdmin], createCategory).get(getAllCategories);
+router
+  .route('/')
+  .post([authenticateToken, isAdmin, validate(createCategorySchema)], createCategory)
+  .get(getAllCategories);
 
 router
   .route('/:idOrSlug')
-  .get(getCategory)
-  .patch([authenticateToken, isAdmin], updateCategory)
-  .delete([authenticateToken, isAdmin], deleteCategory);
+  .get(validate(getCategorySchema), getCategory)
+  .patch([authenticateToken, isAdmin, validate(updateCategorySchema)], updateCategory)
+  .delete([authenticateToken, isAdmin, validate(deleteCategorySchema)], deleteCategory);
 
 module.exports = router;

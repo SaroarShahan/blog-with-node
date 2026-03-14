@@ -1,20 +1,26 @@
 const express = require('express');
 
-const { authenticateToken } = require('../middleware');
+const { authenticateToken, validate } = require('../middleware');
 const {
   createComment,
   getCommentsByPost,
   updateComment,
   deleteComment,
 } = require('../controllers/commentController');
+const {
+  createCommentSchema,
+  deleteCommentSchema,
+  getCommentsByPostSchema,
+  updateCommentSchema,
+} = require('../validations/commentValidation');
 
 const router = express.Router();
 
 router.use(authenticateToken);
 
-router.route('/').post(createComment);
-router.route('/:postId').get(getCommentsByPost);
-router.route('/:id').patch(updateComment);
-router.route('/:id').delete(deleteComment);
+router.route('/').post(validate(createCommentSchema), createComment);
+router.route('/:postId').get(validate(getCommentsByPostSchema), getCommentsByPost);
+router.route('/:id').patch(validate(updateCommentSchema), updateComment);
+router.route('/:id').delete(validate(deleteCommentSchema), deleteComment);
 
 module.exports = router;

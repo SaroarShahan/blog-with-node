@@ -16,6 +16,7 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 - User registration and login
 - JWT-protected routes
 - Role-based admin middleware
+- Centralized request validation with Zod
 - Posts with categories and tags
 - Nested comments support
 - Author-only post updates and admin-enabled post deletes
@@ -171,6 +172,7 @@ Base URL: `/api/v1`
 ## Notes
 
 - Protected routes require an `Authorization: Bearer <token>` header.
+- Request payloads, params, and supported query values are validated with centralized Zod middleware.
 - User management routes are authenticated and admin-only.
 - Category and tag management routes are authenticated and admin-only.
 - Post updates are allowed only for the post author.

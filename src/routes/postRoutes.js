@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { authenticateToken } = require('../middleware');
+const { authenticateToken, validate } = require('../middleware');
 const {
   createPost,
   getAllPosts,
@@ -8,15 +8,25 @@ const {
   updatePost,
   deletePost,
 } = require('../controllers/postController');
+const {
+  createPostSchema,
+  deletePostSchema,
+  getPostSchema,
+  getPostsSchema,
+  updatePostSchema,
+} = require('../validations/postValidation');
 
 const router = express.Router();
 
-router.route('/').post([authenticateToken], createPost).get(getAllPosts);
+router
+  .route('/')
+  .post([authenticateToken, validate(createPostSchema)], createPost)
+  .get(validate(getPostsSchema), getAllPosts);
 
 router
   .route('/:idOrSlug')
-  .get(getPost)
-  .patch([authenticateToken], updatePost)
-  .delete([authenticateToken], deletePost);
+  .get(validate(getPostSchema), getPost)
+  .patch([authenticateToken, validate(updatePostSchema)], updatePost)
+  .delete([authenticateToken, validate(deletePostSchema)], deletePost);
 
 module.exports = router;
