@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 
-const buildPostWhereClause = ({ status, title, search }) => {
+const buildPostWhereClause = ({ status = 'published', title, search }) => {
   const whereClause = {};
 
   if (status) {
