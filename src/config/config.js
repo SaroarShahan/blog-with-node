@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const sequelizeLogging = process.env.DB_LOGGING === 'true' ? console.log : false;
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
@@ -8,7 +10,7 @@ module.exports = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: process.env.DB_DIALECT,
-    logging: process.env.DB_LOGGING === 'true',
+    logging: sequelizeLogging,
     jwtSecret: process.env.JWT_SECRET,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN,
   },
