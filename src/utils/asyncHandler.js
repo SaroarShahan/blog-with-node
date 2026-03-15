@@ -1,9 +1,15 @@
 module.exports = (fn) => {
-  return async (req, res, next) => {
+  return async (...args) => {
     try {
-      await fn(req, res, next);
+      return await fn(...args);
     } catch (error) {
-      next(error);
+      const next = args[args.length - 1];
+
+      if (typeof next === 'function') {
+        return next(error);
+      }
+
+      throw error;
     }
   };
 };

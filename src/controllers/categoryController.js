@@ -1,137 +1,58 @@
-const { Op } = require('sequelize');
+const categoryService = require('../services/categoryService');
 
-const asyncHandler = require('../utils/asyncHandler');
-const { CategoryModel } = require('../models');
-const urlSlugify = require('../utils');
+/**
+ * Create a category.
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {string} req.body.name
+ * @param {string} [req.body.description]
+ * @param {Object} res
+ */
+exports.createCategory = (req, res) => {
+  return categoryService.createCategory(req, res);
+};
 
-exports.createCategory = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
+/**
+ * Get all categories.
+ * @param {Object} req
+ * @param {Object} res
+ */
+exports.getAllCategories = (req, res) => {
+  return categoryService.getAllCategories(req, res);
+};
 
-  let slug = urlSlugify(name);
+/**
+ * Get a category by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.getCategory = (req, res) => {
+  return categoryService.getCategory(req, res);
+};
 
-  const existingSlug = await CategoryModel.findOne({ where: { slug } });
+/**
+ * Update a category by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.body
+ * @param {string} [req.body.name]
+ * @param {string} [req.body.description]
+ * @param {Object} res
+ */
+exports.updateCategory = (req, res) => {
+  return categoryService.updateCategory(req, res);
+};
 
-  if (existingSlug) {
-    slug = `${slug}-${Date.now()}`;
-  }
-
-  const existingCategory = await CategoryModel.findOne({ where: { name } });
-
-  if (existingCategory) {
-    return res.status(400).json({
-      success: false,
-      message: 'Category with the same name already exists',
-    });
-  }
-
-  const category = await CategoryModel.create({ name, slug, description });
-
-  return res.status(201).json({
-    success: true,
-    message: 'Category has been created successfully',
-    data: category,
-  });
-});
-
-exports.getAllCategories = asyncHandler(async (req, res) => {
-  const categories = await CategoryModel.findAll({
-    order: [['id', 'DESC']],
-  });
-
-  return res.json({
-    success: true,
-    message: 'fetched successfully',
-    data: categories,
-  });
-});
-
-exports.getCategory = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const category = await CategoryModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!category) {
-    return res.status(404).json({
-      success: false,
-      message: 'Category not found',
-    });
-  }
-
-  return res.json({
-    success: true,
-    message: 'Category has been retrieved successfully',
-    data: category,
-  });
-});
-
-exports.updateCategory = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-  const { name, description } = req.body;
-
-  const category = await CategoryModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!category) {
-    return res.status(404).json({
-      success: false,
-      message: 'Category not found',
-    });
-  }
-
-  let newSlug = category.slug;
-
-  if (name && name !== category.name) {
-    newSlug = urlSlugify(name);
-
-    const existingSlug = await CategoryModel.findOne({
-      where: { slug: newSlug, id: { [Op.ne]: category.id } },
-    });
-
-    if (existingSlug) {
-      newSlug = `${newSlug}-${Date.now()}`;
-    }
-  }
-
-  await category.update({
-    name: name ?? category.name,
-    description: description ?? category.description,
-    slug: newSlug,
-  });
-
-  return res.json({
-    success: true,
-    message: 'Category updated successfully',
-    data: category,
-  });
-});
-
-exports.deleteCategory = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const category = await CategoryModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!category) {
-    return res.status(404).json({
-      success: false,
-      message: 'Category not found',
-    });
-  }
-
-  await category.destroy();
-
-  return res.json({
-    success: true,
-    message: 'Category has been deleted successfully',
-  });
-});
+/**
+ * Delete a category by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.deleteCategory = (req, res) => {
+  return categoryService.deleteCategory(req, res);
+};

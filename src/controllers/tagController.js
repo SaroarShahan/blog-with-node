@@ -1,127 +1,56 @@
-const { Op } = require('sequelize');
+const tagService = require('../services/tagService');
 
-const asyncHandler = require('../utils/asyncHandler');
-const { TagModel } = require('../models');
-const urlSlugify = require('../utils');
+/**
+ * Create a tag.
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {string} req.body.name
+ * @param {Object} res
+ */
+exports.createTag = (req, res) => {
+  return tagService.createTag(req, res);
+};
 
-exports.createTag = asyncHandler(async (req, res) => {
-  const { name } = req.body;
-  let slug = urlSlugify(name);
+/**
+ * Get all tags.
+ * @param {Object} req
+ * @param {Object} res
+ */
+exports.getAllTags = (req, res) => {
+  return tagService.getAllTags(req, res);
+};
 
-  const existingSlug = await TagModel.findOne({ where: { slug } });
+/**
+ * Get a tag by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.getTag = (req, res) => {
+  return tagService.getTag(req, res);
+};
 
-  if (existingSlug) {
-    slug = `${slug}-${Date.now()}`;
-  }
+/**
+ * Update a tag by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.body
+ * @param {string} [req.body.name]
+ * @param {Object} res
+ */
+exports.updateTag = (req, res) => {
+  return tagService.updateTag(req, res);
+};
 
-  const existingTag = await TagModel.findOne({ where: { name } });
-
-  if (existingTag) {
-    return res.status(400).json({
-      success: false,
-      message: 'Tag with the same name already exists',
-    });
-  }
-
-  const tag = await TagModel.create({ name, slug });
-
-  return res.status(201).json({
-    success: true,
-    message: 'Tag has been created successfully',
-    data: tag,
-  });
-});
-
-exports.getAllTags = asyncHandler(async (req, res) => {
-  const tags = await TagModel.findAll({
-    order: [['id', 'DESC']],
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: 'Tags fetched successfully',
-    data: tags,
-  });
-});
-
-exports.getTag = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const tag = await TagModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!tag) {
-    return res.status(404).json({
-      success: false,
-      message: 'Tag not found',
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: 'Tag fetched successfully',
-    data: tag,
-  });
-});
-
-exports.updateTag = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-  const { name } = req.body;
-
-  const tag = await TagModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!tag) {
-    return res.status(404).json({
-      success: false,
-      message: 'Tag not found',
-    });
-  }
-
-  let existingSlug = tag.slug;
-
-  if (name && name !== tag.name) {
-    existingSlug = urlSlugify(name);
-  }
-
-  await tag.update({
-    name: name ?? tag.name,
-    slug: existingSlug,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: 'Tag has been updated successfully',
-    data: tag,
-  });
-});
-
-exports.deleteTag = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const tag = await TagModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!tag) {
-    return res.status(404).json({
-      success: false,
-      message: 'Tag not found',
-    });
-  }
-
-  await tag.destroy();
-
-  return res.status(200).json({
-    success: true,
-    message: 'Tag has been deleted successfully',
-  });
-});
+/**
+ * Delete a tag by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.deleteTag = (req, res) => {
+  return tagService.deleteTag(req, res);
+};

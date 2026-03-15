@@ -1,139 +1,58 @@
-const asyncHandler = require('../utils/asyncHandler');
-const { CommentModel, UserModel, PostModel } = require('../models');
-const { AUTHORIZATION_POLICIES } = require('../constants');
-const { canEdit, canDelete } = require('../utils/authorization');
+const commentService = require('../services/commentService');
 
-exports.createComment = asyncHandler(async (req, res) => {
-  const { postId, parentCommentId, content } = req.body;
-  const userId = req.user.id;
+/**
+ * Create a comment for a post.
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {number|string} req.body.postId
+ * @param {number|string|null} [req.body.parentCommentId]
+ * @param {string} req.body.content
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {Object} res
+ */
+exports.createComment = (req, res) => {
+  return commentService.createComment(req, res);
+};
 
-  const comment = await CommentModel.create({
-    postId,
-    userId,
-    parentCommentId: parentCommentId || null,
-    content,
-  });
+/**
+ * Get comments for a post.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.postId
+ * @param {Object} res
+ */
+exports.getCommentsByPost = (req, res) => {
+  return commentService.getCommentsByPost(req, res);
+};
 
-  const createdComment = await CommentModel.findByPk(comment.id, {
-    include: [
-      {
-        model: UserModel,
-        as: 'author',
-        attributes: ['id', 'username'],
-      },
-    ],
-  });
+/**
+ * Update a comment.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.id
+ * @param {Object} req.body
+ * @param {string} [req.body.content]
+ * @param {string} [req.body.status]
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string} req.user.role
+ * @param {Object} res
+ */
+exports.updateComment = (req, res) => {
+  return commentService.updateComment(req, res);
+};
 
-  return res.status(201).json({
-    success: true,
-    message: 'Comment has been created successfully',
-    data: createdComment,
-  });
-});
-
-exports.getCommentsByPost = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
-
-  const comments = await CommentModel.findAll({
-    where: { post_id: postId, parentCommentId: null },
-    include: [
-      {
-        model: UserModel,
-        as: 'author',
-        attributes: ['id', 'username'],
-        where: { status: 'active' },
-        required: true,
-      },
-      {
-        model: CommentModel,
-        as: 'replies',
-        include: [
-          {
-            model: UserModel,
-            as: 'author',
-            attributes: ['id', 'username'],
-            where: { status: 'active' },
-            required: true,
-          },
-        ],
-        required: false,
-      },
-    ],
-    order: [['id', 'DESC']],
-  });
-
-  return res.json({
-    success: true,
-    message: 'Comments fetched successfully',
-    data: comments,
-  });
-});
-
-exports.updateComment = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { content, status } = req.body;
-  const comment = await CommentModel.findByPk(id);
-
-  if (!comment) {
-    return res.status(404).json({
-      success: false,
-      message: 'Comment not found',
-    });
-  }
-
-  const canEditResult = canEdit(req.user, comment.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
-
-  if (!canEditResult) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not authorized to update this comment',
-    });
-  }
-
-  await comment.update({
-    content: content ?? comment.content,
-    status: status ?? comment.status,
-  });
-
-  return res.json({
-    success: true,
-    message: 'Comment has been updated successfully',
-    data: comment,
-  });
-});
-
-exports.deleteComment = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const comment = await CommentModel.findByPk(id);
-
-  if (!comment) {
-    return res.status(404).json({
-      success: false,
-      message: 'Comment not found',
-    });
-  }
-
-  const post = await PostModel.findByPk(comment.postId, {
-    attributes: ['id', 'userId'],
-  });
-
-  const canDeleteResult = canDelete(
-    req.user,
-    [comment.userId, post?.userId].filter(Boolean),
-    AUTHORIZATION_POLICIES.OWNER_OR_ADMIN,
-  );
-
-  if (!canDeleteResult) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not authorized to delete this comment',
-    });
-  }
-
-  await comment.destroy();
-
-  return res.json({
-    success: true,
-    message: 'Comment has been deleted successfully',
-  });
-});
+/**
+ * Delete a comment.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.id
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string} req.user.role
+ * @param {Object} res
+ */
+exports.deleteComment = (req, res) => {
+  return commentService.deleteComment(req, res);
+};

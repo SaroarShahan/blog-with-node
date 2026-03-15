@@ -1,391 +1,105 @@
-const { Op } = require('sequelize');
+const postService = require('../services/postService');
 
-const { PostModel, UserModel, CategoryModel, TagModel, CommentModel } = require('../models');
-const { buildPostWhereClause } = require('../utils/buildPostWhereClause');
-const { AUTHORIZATION_POLICIES, getOffset } = require('../constants');
-const asyncHandler = require('../utils/asyncHandler');
-const { canEdit, canDelete } = require('../utils/authorization');
-const urlSlugify = require('../utils');
+/**
+ * Create a post.
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {string} req.body.title
+ * @param {string} [req.body.excerpt]
+ * @param {string} req.body.content
+ * @param {string} [req.body.status]
+ * @param {Array<number|string>} [req.body.categoryIds]
+ * @param {Array<number|string>} [req.body.tagIds]
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {Object} res
+ */
+exports.createPost = (req, res) => {
+  return postService.createPost(req, res);
+};
 
-exports.createPost = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const { title, excerpt, content, status, categoryIds = [], tagIds = [] } = req.body;
+/**
+ * Get all posts with optional filters.
+ * @param {Object} req
+ * @param {Object} req.query
+ * @param {string} [req.query.page]
+ * @param {string} [req.query.limit]
+ * @param {string} [req.query.category]
+ * @param {string} [req.query.tag]
+ * @param {string} [req.query.search]
+ * @param {string} [req.query.status]
+ * @param {Object} res
+ */
+exports.getAllPosts = (req, res) => {
+  return postService.getAllPosts(req, res);
+};
 
-  let slug = urlSlugify(title);
+/**
+ * Get a post by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} [req.user]
+ * @param {number|string} [req.user.id]
+ * @param {Object} res
+ */
+exports.getPost = (req, res) => {
+  return postService.getPost(req, res);
+};
 
-  const existingPost = await PostModel.findOne({ where: { slug } });
+/**
+ * Update a post by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.body
+ * @param {string} [req.body.title]
+ * @param {string} [req.body.excerpt]
+ * @param {string} [req.body.content]
+ * @param {string} [req.body.status]
+ * @param {Array<number|string>} [req.body.categoryIds]
+ * @param {Array<number|string>} [req.body.tagIds]
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string} req.user.role
+ * @param {Object} res
+ */
+exports.updatePost = (req, res) => {
+  return postService.updatePost(req, res);
+};
 
-  if (existingPost) {
-    slug = `${slug}-${Date.now()}`;
-  }
+/**
+ * Delete a post by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string} req.user.role
+ * @param {Object} res
+ */
+exports.deletePost = (req, res) => {
+  return postService.deletePost(req, res);
+};
 
-  const post = await PostModel.create({
-    userId,
-    title,
-    slug,
-    excerpt,
-    content,
-    status: status ?? 'draft',
-    publishedAt: status === 'published' ? new Date() : null,
-  });
+/**
+ * Get posts by category ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.getPostsByCategory = (req, res) => {
+  return postService.getPostsByCategory(req, res);
+};
 
-  if (categoryIds.length) {
-    await post.setCategories(categoryIds);
-  }
-
-  if (tagIds.length) {
-    await post.setTags(tagIds);
-  }
-
-  const createdPost = await PostModel.findByPk(post.id, {
-    include: [
-      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
-      { model: CategoryModel, as: 'categories' },
-      { model: TagModel, as: 'tags' },
-    ],
-  });
-
-  return res.status(201).json({
-    success: true,
-    message: 'Post created successfully',
-    data: createdPost,
-  });
-});
-
-exports.getAllPosts = asyncHandler(async (req, res) => {
-  const { page, limit, category, tag } = req.query;
-
-  const whereClause = buildPostWhereClause(req.query);
-
-  const querySpec = {
-    distinct: true,
-    where: whereClause,
-    include: [
-      {
-        model: UserModel,
-        as: 'author',
-        where: {
-          status: 'active',
-        },
-        attributes: ['id', 'username', 'email'],
-        required: true,
-      },
-      {
-        model: CategoryModel,
-        as: 'categories',
-        where: category ? { name: category } : undefined,
-        through: { attributes: [] },
-        required: !!category,
-      },
-      {
-        model: TagModel,
-        as: 'tags',
-        where: tag ? { name: tag } : undefined,
-        through: { attributes: [] },
-        required: !!tag,
-      },
-    ],
-    limit: limit ? parseInt(limit) : undefined,
-    offset: getOffset(page, limit),
-    order: [['id', 'DESC']],
-  };
-
-  const { rows, count } = await PostModel.findAndCountAll({
-    ...querySpec,
-  });
-
-  res.json({
-    success: true,
-    message: 'Posts fetched successfully',
-    data: rows,
-    meta: {
-      total: count,
-      page: page ? +page : 1,
-      limit: limit ? +limit : count,
-      totalPage: limit ? Math.ceil(count / +limit) : 1,
-    },
-  });
-});
-
-exports.getPost = asyncHandler(async (req, res) => {
-  try {
-    const { idOrSlug } = req.params;
-    const userId = req.user?.id;
-
-    const querySpec = {
-      include: [
-        {
-          model: UserModel,
-          as: 'author',
-          attributes: ['id', 'username', 'email'],
-        },
-        {
-          model: CategoryModel,
-          as: 'categories',
-          through: { attributes: [] },
-        },
-        {
-          model: TagModel,
-          as: 'tags',
-          through: { attributes: [] },
-        },
-        {
-          model: CommentModel,
-          as: 'comments',
-          where: { parentCommentId: null },
-          required: false,
-          include: [
-            {
-              model: UserModel,
-              as: 'author',
-              attributes: ['id', 'username'],
-            },
-            {
-              model: CommentModel,
-              as: 'replies',
-              include: [
-                {
-                  model: UserModel,
-                  as: 'author',
-                  attributes: ['id', 'username'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    const post = await PostModel.findOne({
-      where: {
-        [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-      },
-      ...querySpec,
-    });
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found!',
-      });
-    }
-
-    if (userId !== post.userId) {
-      await post.increment('viewCount');
-    }
-
-    res.json({
-      success: true,
-      message: 'Post fetched successfully',
-      data: post,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
-exports.updatePost = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-  const { title, excerpt, content, status, categoryIds, tagIds } = req.body;
-  const post = await PostModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!post) {
-    return res.status(404).json({
-      success: false,
-      message: 'Post not found!',
-    });
-  }
-
-  const canEditResult = canEdit(req.user, post.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
-
-  if (!canEditResult) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not authorized to edit this post',
-    });
-  }
-
-  let newSlug = post.slug;
-
-  if (title && title !== post.title) {
-    newSlug = urlSlugify(title);
-
-    const existingSlug = await PostModel.findOne({
-      where: {
-        slug: newSlug,
-        id: { [Op.ne]: post.id },
-      },
-    });
-
-    if (existingSlug) {
-      newSlug = `${newSlug}-${Date.now()}`;
-    }
-  }
-
-  await post.update({
-    title: title ?? post.title,
-    slug: newSlug,
-    excerpt: excerpt ?? post.excerpt,
-    content: content ?? post.content,
-    status: status ?? post.status,
-    publishedAt: status === 'published' ? post.publishedAt || new Date() : post.publishedAt,
-  });
-
-  if (Array.isArray(categoryIds)) {
-    await post.setCategories(categoryIds);
-  }
-
-  if (Array.isArray(tagIds)) {
-    await post.setTags(tagIds);
-  }
-
-  const updatedPost = await PostModel.findByPk(post.id, {
-    include: [
-      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
-      { model: CategoryModel, as: 'categories', through: { attributes: [] } },
-      { model: TagModel, as: 'tags', through: { attributes: [] } },
-    ],
-  });
-
-  res.json({
-    success: true,
-    message: 'Post updated successfully',
-    data: updatedPost,
-  });
-});
-
-exports.deletePost = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-  const post = await PostModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-  });
-
-  if (!post) {
-    return res.status(404).json({
-      success: false,
-      message: 'Post not found!',
-    });
-  }
-
-  const canDeleteResult = canDelete(req.user, post.userId, AUTHORIZATION_POLICIES.OWNER_OR_ADMIN);
-
-  if (!canDeleteResult) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not authorized to delete this post',
-    });
-  }
-
-  await post.destroy();
-
-  res.json({
-    success: true,
-    message: 'Post has been deleted successfully!',
-  });
-});
-
-exports.getPostsByCategory = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const category = await CategoryModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-    include: [
-      {
-        model: PostModel,
-        as: 'posts',
-        through: { attributes: [] },
-        include: [
-          {
-            model: UserModel,
-            as: 'author',
-            attributes: ['id', 'name', 'username'],
-          },
-        ],
-      },
-    ],
-  });
-
-  if (!category) {
-    return res.status(404).json({
-      success: false,
-      message: 'Category not found',
-    });
-  }
-
-  return res.json({
-    success: true,
-    data: category.posts,
-  });
-});
-
-exports.getCategoryWithPosts = asyncHandler(async (req, res) => {
-  const { idOrSlug } = req.params;
-
-  const category = await CategoryModel.findOne({
-    where: {
-      [Op.or]: [{ slug: idOrSlug }, { id: idOrSlug }],
-    },
-    include: [
-      {
-        model: PostModel,
-        as: 'posts',
-        through: { attributes: [] },
-        include: [
-          {
-            model: UserModel,
-            as: 'author',
-            attributes: ['id', 'name', 'username'],
-          },
-          {
-            model: CommentModel,
-            as: 'comments',
-            attributes: ['id', 'content', 'createdAt'],
-            where: { parentCommentId: null },
-            required: false,
-            include: [
-              {
-                model: UserModel,
-                as: 'author',
-                attributes: ['id', 'username'],
-              },
-              {
-                model: CommentModel,
-                as: 'replies',
-                include: [
-                  {
-                    model: UserModel,
-                    as: 'author',
-                    attributes: ['id', 'username'],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-
-  if (!category) {
-    return res.status(404).json({
-      success: false,
-      message: 'Category not found',
-    });
-  }
-
-  return res.json({
-    success: true,
-    data: category,
-  });
-});
+/**
+ * Get a category with its posts by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} res
+ */
+exports.getCategoryWithPosts = (req, res) => {
+  return postService.getCategoryWithPosts(req, res);
+};
