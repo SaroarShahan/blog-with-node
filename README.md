@@ -41,7 +41,9 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 │   ├── middleware/
 │   ├── models/
 │   ├── routes/
+│   ├── services/
 │   ├── utils/
+│   ├── validations/
 │   ├── app.js
 │   └── server.js
 ├── .env.example
@@ -120,6 +122,7 @@ yarn start
 yarn lint
 yarn lint:fix
 yarn format
+yarn prepare
 yarn db:migrate
 yarn db:migrate:undo
 yarn db:migrate:undo:all
@@ -191,6 +194,8 @@ Base URL: `/api/v1`
   5 requests per hour per IP.
 - Structured request logs include request ID, method, path, status code, latency, and user ID (when
   authenticated).
+- Controllers delegate business logic to dedicated service modules under `src/services`.
+- Pre-commit checks are enforced by Husky + lint-staged (ESLint + Prettier on staged files).
 - User management routes are authenticated and admin-only.
 - Category and tag management routes are authenticated and admin-only.
 - Post updates are allowed only for the post author.
