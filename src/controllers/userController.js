@@ -218,7 +218,6 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   }
 
   await profile.update({
-    fullName: fullName ?? profile.fullName,
     firstName: firstName ?? profile.firstName,
     lastName: lastName ?? profile.lastName,
     bio: bio ?? profile.bio,

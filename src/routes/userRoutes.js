@@ -26,7 +26,8 @@ router
   .route('/:id')
   .get(validate(getUserSchema), userController.getUser)
   .patch(validate(updateUserSchema), userController.updateUser)
-  .patch(validate(updateUserSchema), userController.updateProfile)
   .delete(validate(deleteUserSchema), userController.deleteUser);
+
+router.route('/:id/profile').patch(validate(updateUserSchema), userController.updateProfile);
 
 module.exports = router;
