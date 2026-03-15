@@ -3,7 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const compression = require('compression');
 
-const { errorHandler } = require('./middleware/errorHandler');
+const { errorHandler, requestLogger } = require('./middleware');
 
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
@@ -40,6 +40,7 @@ function createApp() {
   app.use(compression());
 
   app.use(express.json());
+  app.use(requestLogger);
 
   // Routes
   app.use('/api/v1/users', userRoutes);

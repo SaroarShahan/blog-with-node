@@ -2,6 +2,7 @@ const { authenticateToken } = require('./auth');
 const { loginRateLimiter, registerRateLimiter } = require('./authRateLimit');
 const { isAdmin } = require('./isAdmin');
 const { errorHandler } = require('./errorHandler');
+const { requestLogger } = require('./requestLogger');
 const validate = require('./validate');
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
   loginRateLimiter,
   registerRateLimiter,
   isAdmin,
+  requestLogger,
   validate,
   errorHandler,
 };

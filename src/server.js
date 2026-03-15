@@ -1,20 +1,21 @@
 require('dotenv').config();
 const { createApp } = require('./app');
 const sequelize = require('./config/database');
+const logger = require('./utils/logger');
 
 async function bootstrap() {
   await sequelize.authenticate();
-  console.log('✅ DB connected');
+  logger.info('DB connected');
 
   const app = createApp();
   const PORT = process.env.PORT || 4000;
 
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info({ port: PORT }, 'Server started');
   });
 }
 
 bootstrap().catch((err) => {
-  console.error('❌ Failed to start:', err);
+  logger.error({ err }, 'Failed to start');
   process.exit(1);
 });
