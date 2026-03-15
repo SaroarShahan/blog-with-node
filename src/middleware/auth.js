@@ -7,7 +7,7 @@ exports.authenticateToken = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        status: false,
+        success: false,
         message: 'Access token required',
       });
     }
@@ -17,7 +17,7 @@ exports.authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     return res.status(403).json({
-      status: false,
+      success: false,
       message: 'Invalid or expired token',
       error: error.message,
     });

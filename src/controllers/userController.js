@@ -79,14 +79,14 @@ exports.getAllUsers = async (req, res) => {
     });
 
     return res.status(200).json({
-      status: true,
+      success: true,
       message: 'Users fetched successfully!',
       data: users,
       total: count,
     });
   } catch (error) {
     return res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
@@ -107,13 +107,13 @@ exports.getUser = asyncHandler(async (req, res) => {
 
   if (!user) {
     return res.status(404).json({
-      status: false,
+      success: false,
       message: 'User not found!',
     });
   }
 
   return res.status(200).json({
-    status: true,
+    success: true,
     message: 'User fetched successfully!',
     data: user,
   });
@@ -125,7 +125,7 @@ exports.getUserPosts = async (req, res) => {
 
     if (!userId) {
       return res.status(400).json({
-        status: false,
+        success: false,
         message: 'userId is required as a path parameter',
       });
     }
@@ -148,7 +148,7 @@ exports.getUserPosts = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: false,
+        success: false,
         message: 'User not found!',
       });
     }
@@ -156,14 +156,14 @@ exports.getUserPosts = async (req, res) => {
     const posts = user.posts || [];
 
     return res.status(200).json({
-      status: true,
+      success: true,
       message: 'User posts fetched successfully!',
       data: posts,
       total: posts.length,
     });
   } catch (error) {
     return res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
@@ -178,7 +178,7 @@ exports.updateUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: false,
+        success: false,
         message: 'User not found!',
       });
     }
@@ -186,17 +186,17 @@ exports.updateUser = async (req, res) => {
       username: username ?? user.username,
       gender: gender ?? user.gender,
       role: role ?? user.role,
-      status: status ?? user.status,
+      success: status ?? user.status,
     });
 
     return res.status(200).json({
-      status: true,
+      success: true,
       message: 'User has been updated successfully!',
       data: user,
     });
   } catch (error) {
     return res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
@@ -212,7 +212,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 
   if (!profile) {
     return res.status(401).json({
-      status: false,
+      success: false,
       message: 'Profile not found for the user!',
     });
   }
@@ -243,7 +243,7 @@ exports.deleteUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: false,
+        success: false,
         message: 'User not found!',
       });
     }
@@ -251,12 +251,12 @@ exports.deleteUser = async (req, res) => {
     await user.destroy();
 
     return res.status(200).json({
-      status: true,
+      success: true,
       message: 'User has been deleted successfully!',
     });
   } catch (error) {
     return res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }

@@ -95,7 +95,7 @@ exports.getAllPosts = asyncHandler(async (req, res) => {
   });
 
   res.json({
-    status: true,
+    success: true,
     message: 'Posts fetched successfully',
     data: rows,
     meta: {
@@ -165,7 +165,7 @@ exports.getPost = asyncHandler(async (req, res) => {
 
     if (!post) {
       return res.status(404).json({
-        status: false,
+        success: false,
         message: 'Post not found!',
       });
     }
@@ -175,13 +175,13 @@ exports.getPost = asyncHandler(async (req, res) => {
     }
 
     res.json({
-      status: true,
+      success: true,
       message: 'Post fetched successfully',
       data: post,
     });
   } catch (error) {
     res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
@@ -198,7 +198,7 @@ exports.updatePost = asyncHandler(async (req, res) => {
 
   if (!post) {
     return res.status(404).json({
-      status: false,
+      success: false,
       message: 'Post not found!',
     });
   }
@@ -207,7 +207,7 @@ exports.updatePost = asyncHandler(async (req, res) => {
 
   if (!canEditResult) {
     return res.status(403).json({
-      status: false,
+      success: false,
       message: 'You are not authorized to edit this post',
     });
   }
@@ -255,7 +255,7 @@ exports.updatePost = asyncHandler(async (req, res) => {
   });
 
   res.json({
-    status: true,
+    success: true,
     message: 'Post updated successfully',
     data: updatedPost,
   });
@@ -271,7 +271,7 @@ exports.deletePost = asyncHandler(async (req, res) => {
 
   if (!post) {
     return res.status(404).json({
-      status: false,
+      success: false,
       message: 'Post not found!',
     });
   }
@@ -280,7 +280,7 @@ exports.deletePost = asyncHandler(async (req, res) => {
 
   if (!canDeleteResult) {
     return res.status(403).json({
-      status: false,
+      success: false,
       message: 'You are not authorized to delete this post',
     });
   }
@@ -288,7 +288,7 @@ exports.deletePost = asyncHandler(async (req, res) => {
   await post.destroy();
 
   res.json({
-    status: true,
+    success: true,
     message: 'Post has been deleted successfully!',
   });
 });

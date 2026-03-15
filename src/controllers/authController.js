@@ -11,7 +11,7 @@ exports.register = async (req, res) => {
 
     if (existingUser) {
       return res.status(400).json({
-        status: false,
+        success: false,
         message: 'User with this email already exists!',
       });
     }
@@ -31,13 +31,13 @@ exports.register = async (req, res) => {
     });
 
     res.status(201).json({
-      status: true,
+      success: true,
       message: 'Registration has been completed successfully!',
       data: userWithoutPassword,
     });
   } catch (error) {
     res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        status: false,
+        success: false,
         message: 'Invalid credentials!',
       });
     }
@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
 
     if (!isPasswordValid) {
       return res.status(401).json({
-        status: false,
+        success: false,
         message: 'Invalid credentials!',
       });
     }
@@ -71,7 +71,7 @@ exports.login = async (req, res) => {
     });
 
     res.status(200).json({
-      status: true,
+      success: true,
       message: 'Login successful!',
       data: {
         id: user.id,
@@ -81,7 +81,7 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      status: false,
+      success: false,
       message: error.message,
     });
   }
