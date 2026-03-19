@@ -5,6 +5,8 @@ const { emailSchema, idParamSchema, pageLimitQuerySchema, userIdParamSchema } = 
 const createUserSchema = {
   body: z
     .object({
+      firstName: z.string().trim().min(1).max(100),
+      lastName: z.string().trim().min(1).max(100),
       username: z.string().trim().min(3).max(50),
       email: emailSchema,
       password: z.string().min(8).max(255),
