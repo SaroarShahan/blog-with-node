@@ -3,14 +3,15 @@ const helmet = require('helmet');
 const cors = require('cors');
 const compression = require('compression');
 
-const { errorHandler, requestLogger } = require('./middleware');
-
+const { requestLogger } = require('./middleware');
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const AppError = require('./errors/appError');
+const globalErrorHandler = require('./errors/globalErrorHandler');
 
 function createApp() {
   const app = express();
@@ -43,13 +44,6 @@ function createApp() {
   app.use(requestLogger);
 
   // Routes
-  app.use('/api/v1/users', userRoutes);
-  app.use('/api/v1/posts', postRoutes);
-  app.use('/api/v1/auth', authRoutes);
-  app.use('/api/v1/categories', categoryRoutes);
-  app.use('/api/v1/tags', tagRoutes);
-  app.use('/api/v1/comments', commentRoutes);
-
   app.get('/health', (req, res) => {
     res.json({
       uptime: process.uptime(),
@@ -57,7 +51,18 @@ function createApp() {
       timestamp: Date.now(),
     });
   });
-  app.use(errorHandler);
+
+  app.use('/api/v1/users', userRoutes);
+  app.use('/api/v1/posts', postRoutes);
+  app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/categories', categoryRoutes);
+  app.use('/api/v1/tags', tagRoutes);
+  app.use('/api/v1/comments', commentRoutes);
+
+  app.use('/', (req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
+  });
+  app.use(globalErrorHandler);
 
   return app;
 }
