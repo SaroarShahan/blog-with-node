@@ -16,10 +16,6 @@ exports.authenticateToken = async (req, res, next) => {
     req.user = payload;
     next();
   } catch (error) {
-    return res.status(403).json({
-      success: false,
-      message: 'Invalid or expired token',
-      error: error.message,
-    });
+    next(error);
   }
 };
