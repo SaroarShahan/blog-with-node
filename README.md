@@ -32,12 +32,21 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 
 ```text
 .
+├── .dockerignore
+├── .env.example
+├── .sequelizerc
+├── Dockerfile
+├── docker-compose.yml
 ├── migrations/
+├── package.json
+├── README.md
+├── run.sh
 ├── seeders/
 ├── src/
 │   ├── config/
 │   ├── constants/
 │   ├── controllers/
+│   ├── errors/
 │   ├── middleware/
 │   ├── models/
 │   ├── routes/
@@ -46,8 +55,7 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 │   ├── validations/
 │   ├── app.js
 │   └── server.js
-├── .env.example
-└── package.json
+└── yarn.lock
 ```
 
 ## Getting Started
@@ -64,18 +72,17 @@ Copy `.env.example` to `.env` and fill in your database and JWT values.
 
 ```env
 DB_NAME=blog
-DB_USER=
-DB_PASSWORD=
-DB_HOST=
+DB_USER=root
+DB_PASSWORD=admin123456
+DB_HOST=localhost
 DB_DIALECT=mysql
-DB_PORT=3306
+DB_PORT=3307
 PORT=8080
 CORS_ORIGIN=http://localhost:3000
 DB_LOGGING=false
-LOG_LEVEL=info
 
-JWT_SECRET=
-JWT_EXPIRES_IN=
+JWT_SECRET=ILoveNodeJS
+JWT_EXPIRES_IN=7d
 ```
 
 ### 3. Run migrations
@@ -113,6 +120,106 @@ yarn start
 ```
 
 The API starts on the port from `PORT` or falls back to `4000`.
+
+## Docker
+
+### 1. Configure environment variables
+
+Copy `.env.example` to `.env` and set real values for the database user, password, JWT secret, and
+token expiry.
+
+For Docker Compose:
+
+- the app service automatically uses `db` as `DB_HOST`
+- the MySQL container still listens on `3306` internally
+- `DB_PORT` only controls the host machine port, so using `3307` avoids conflicts if local MySQL is
+  already using `3306`
+
+### 2. Build and start the containers
+
+```bash
+docker compose up --build -d
+```
+
+This starts:
+
+- `api`: the Express application
+- `db`: a MySQL 8.4 database with a persistent named volume
+
+The API will be available on `http://localhost:8080` when `PORT=8080` in `.env`.
+
+### 3. Run migrations
+
+```bash
+docker compose exec api yarn db:migrate
+```
+
+### 4. Seed demo data
+
+```bash
+docker compose exec api yarn db:seed
+```
+
+### 5. Stop the containers
+
+```bash
+docker compose down
+```
+
+To stop and also remove the database volume:
+
+```bash
+docker compose down -v
+```
+
+If the MySQL container fails to start with an error like `bind: address already in use`, change
+`DB_PORT` in `.env` to a free host port such as `3307`, then restart the stack.
+
+### `run.sh` helper
+
+You can also use the executable [run.sh](/Users/shshahan/learnings/blog-with-node/run.sh) helper to
+run common Docker tasks:
+
+```bash
+./run.sh up
+./run.sh down
+./run.sh restart
+./run.sh logs
+./run.sh migrate
+./run.sh seed
+./run.sh status
+```
+
+If `run.sh` is not executable on your machine, run the same commands with `bash` instead:
+
+```bash
+bash run.sh up
+```
+
+To make it executable:
+
+```bash
+chmod +x run.sh
+```
+
+Command summary:
+
+- `./run.sh up`: build and start the containers in detached mode
+- `./run.sh down`: stop the containers
+- `./run.sh restart`: rebuild and restart the containers
+- `./run.sh logs`: follow container logs
+- `./run.sh migrate`: run database migrations in the `api` container
+- `./run.sh seed`: run database seeders in the `api` container
+- `./run.sh status`: show running container status
+
+Typical Docker flow:
+
+```bash
+./run.sh up
+./run.sh migrate
+./run.sh seed
+./run.sh logs
+```
 
 ## Scripts
 
@@ -203,3 +310,5 @@ Base URL: `/api/v1`
 - Comment updates are allowed only for the comment author.
 - Comment deletes are allowed for an admin, the comment author, or the author of the parent post.
 - Database connection is verified during server startup before the app begins listening.
+- Sequelize config supports both `development` and `production`, which is required for the Docker
+  container because it runs with `NODE_ENV=production`.
