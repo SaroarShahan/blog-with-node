@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'comments',
       });
+      models.UserModel.belongsTo(models.RoleModel, {
+        foreignKey: 'roleId',
+        as: 'role',
+      });
     }
   }
 
@@ -54,6 +58,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM(USER_ROLES.USER, USER_ROLES.ADMIN),
         field: 'role',
         defaultValue: USER_ROLES.USER,
+      },
+      roleId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'role_id',
+        allowNull: true,
       },
       status: {
         type: DataTypes.ENUM('active', 'inactive', 'blocked'),
