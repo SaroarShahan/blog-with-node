@@ -63,6 +63,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BIGINT.UNSIGNED,
         field: 'role_id',
         allowNull: true,
+        references: {
+          model: 'roles',
+          key: 'id',
+        },
       },
       status: {
         type: DataTypes.ENUM('active', 'inactive', 'blocked'),
