@@ -67,6 +67,8 @@ module.exports = (sequelize, DataTypes) => {
           model: 'roles',
           key: 'id',
         },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       status: {
         type: DataTypes.ENUM('active', 'inactive', 'blocked'),
