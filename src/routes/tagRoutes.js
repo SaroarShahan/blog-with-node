@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { authenticateToken, isAdmin, validate } = require('../middleware');
+const { authenticateToken, validate } = require('../middleware');
 const {
   createTag,
   getAllTags,
@@ -8,16 +8,27 @@ const {
   updateTag,
   deleteTag,
 } = require('../controllers/tagController');
-const { createTagSchema, deleteTagSchema, getTagSchema, updateTagSchema } = require('../validations/tagValidation');
+const {
+  createTagSchema,
+  deleteTagSchema,
+  getTagSchema,
+  updateTagSchema,
+} = require('../validations/tagValidation');
+const { hasPermission } = require('../middleware/authorize');
 
 const router = express.Router();
 
-router.route('/').post([authenticateToken, isAdmin, validate(createTagSchema)], createTag).get(getAllTags);
+router.use(authenticateToken);
+
+router
+  .route('/')
+  .post([hasPermission('create_tag'), validate(createTagSchema)], createTag)
+  .get(hasPermission('view_tags'), getAllTags);
 
 router
   .route('/:idOrSlug')
-  .get(validate(getTagSchema), getTag)
-  .patch([authenticateToken, isAdmin, validate(updateTagSchema)], updateTag)
-  .delete([authenticateToken, isAdmin, validate(deleteTagSchema)], deleteTag);
+  .get(hasPermission('view_tag'), validate(getTagSchema), getTag)
+  .patch([hasPermission('edit_tag'), validate(updateTagSchema)], updateTag)
+  .delete([hasPermission('delete_tag'), validate(deleteTagSchema)], deleteTag);
 
 module.exports = router;

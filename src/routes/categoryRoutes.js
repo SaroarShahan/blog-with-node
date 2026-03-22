@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateToken, isAdmin, validate } = require('../middleware');
+const { authenticateToken, validate } = require('../middleware');
 const {
   createCategory,
   getAllCategories,
@@ -13,18 +13,21 @@ const {
   getCategorySchema,
   updateCategorySchema,
 } = require('../validations/categoryValidation');
+const { hasPermission } = require('../middleware/authorize');
 
 const router = express.Router();
 
+router.use(authenticateToken);
+
 router
   .route('/')
-  .post([authenticateToken, isAdmin, validate(createCategorySchema)], createCategory)
-  .get(getAllCategories);
+  .post([hasPermission('create_category'), validate(createCategorySchema)], createCategory)
+  .get([hasPermission('view_categories')], getAllCategories);
 
 router
   .route('/:idOrSlug')
-  .get(validate(getCategorySchema), getCategory)
-  .patch([authenticateToken, isAdmin, validate(updateCategorySchema)], updateCategory)
-  .delete([authenticateToken, isAdmin, validate(deleteCategorySchema)], deleteCategory);
+  .get([hasPermission('view_category')], validate(getCategorySchema), getCategory)
+  .patch([hasPermission('edit_category'), validate(updateCategorySchema)], updateCategory)
+  .delete([hasPermission('delete_category'), validate(deleteCategorySchema)], deleteCategory);
 
 module.exports = router;

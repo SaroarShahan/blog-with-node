@@ -15,18 +15,21 @@ const {
   getPostsSchema,
   updatePostSchema,
 } = require('../validations/postValidation');
+const { hasPermission } = require('../middleware/authorize');
 
 const router = express.Router();
 
+router.use(authenticateToken);
+
 router
   .route('/')
-  .post([authenticateToken, validate(createPostSchema)], createPost)
-  .get(validate(getPostsSchema), getAllPosts);
+  .post([hasPermission('create_post'), validate(createPostSchema)], createPost)
+  .get([hasPermission('view_post')], validate(getPostsSchema), getAllPosts);
 
 router
   .route('/:idOrSlug')
-  .get(validate(getPostSchema), getPost)
-  .patch([authenticateToken, validate(updatePostSchema)], updatePost)
-  .delete([authenticateToken, validate(deletePostSchema)], deletePost);
+  .get([hasPermission('view_post')], validate(getPostSchema), getPost)
+  .patch([hasPermission('edit_post'), validate(updatePostSchema)], updatePost)
+  .delete([hasPermission('delete_post'), validate(deletePostSchema)], deletePost);
 
 module.exports = router;
