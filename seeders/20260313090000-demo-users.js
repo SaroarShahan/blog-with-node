@@ -1,6 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 
 module.exports = {
   async up(queryInterface) {
@@ -9,6 +10,21 @@ module.exports = {
       bcrypt.hash('Admin@1234', 10),
       bcrypt.hash('User@1234', 10),
     ]);
+    const roles = await queryInterface.sequelize.query(
+      `
+        SELECT id, name
+        FROM roles
+        WHERE name IN ('super_admin', 'user')
+      `,
+      { type: queryInterface.sequelize.QueryTypes.SELECT },
+    );
+
+    const superAdminRole = roles.find((role) => role.name === 'super_admin');
+    const userRole = roles.find((role) => role.name === 'user');
+
+    if (!superAdminRole || !userRole) {
+      throw new Error('Required roles are not seeded yet. Seed roles before demo users.');
+    }
 
     await queryInterface.bulkInsert('users', [
       {
@@ -17,7 +33,7 @@ module.exports = {
         email: 'saroar.shahan@gmail.com',
         password: adminPassword,
         gender: 'other',
-        role: 'admin',
+        role_id: superAdminRole.id,
         status: 'active',
         created_at: now,
         updated_at: now,
@@ -29,7 +45,7 @@ module.exports = {
         email: 'kuddus@example.com',
         password: userPassword,
         gender: 'male',
-        role: 'user',
+        role_id: userRole.id,
         status: 'active',
         created_at: now,
         updated_at: now,
@@ -40,7 +56,9 @@ module.exports = {
 
   async down(queryInterface) {
     await queryInterface.bulkDelete('users', {
-      email: ['saroar.shahan@gmail.com', 'kuddus@example.com'],
+      email: {
+        [Op.in]: ['saroar.shahan@gmail.com', 'kuddus@example.com'],
+      },
     });
   },
 };
