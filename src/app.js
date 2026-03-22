@@ -10,6 +10,8 @@ const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const permissionRoutes = require('./routes/permissionRoutes');
+const roleRoutes = require('./routes/roleRoutes');
 const AppError = require('./errors/appError');
 const globalErrorHandler = require('./errors/globalErrorHandler');
 
@@ -58,6 +60,8 @@ function createApp() {
   app.use('/api/v1/categories', categoryRoutes);
   app.use('/api/v1/tags', tagRoutes);
   app.use('/api/v1/comments', commentRoutes);
+  app.use('/api/v1/permissions', permissionRoutes);
+  app.use('/api/v1/roles', roleRoutes);
 
   app.use('/', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));

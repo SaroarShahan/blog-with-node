@@ -11,7 +11,7 @@ const createUserSchema = {
       email: emailSchema,
       password: z.string().min(8).max(255),
       gender: z.enum(['male', 'female', 'other']),
-      role: z.enum(['user', 'admin']).optional(),
+      roleId: z.coerce.number().int().positive().optional(),
     })
     .strict(),
 };
@@ -21,7 +21,7 @@ const getUsersSchema = {
     email: z.string().trim().optional(),
     username: z.string().trim().optional(),
     gender: z.enum(['male', 'female', 'other']).optional(),
-    role: z.enum(['user', 'admin']).optional(),
+    roleId: z.coerce.number().int().positive().optional(),
   }),
 };
 
@@ -39,7 +39,7 @@ const updateUserSchema = {
     .object({
       username: z.string().trim().min(3).max(50).optional(),
       gender: z.enum(['male', 'female', 'other']).optional(),
-      role: z.enum(['user', 'admin']).optional(),
+      roleId: z.coerce.number().int().positive().optional(),
       status: z.enum(['active', 'inactive', 'blocked']).optional(),
       firstName: z.string().trim().min(1).max(100).optional(),
       lastName: z.string().trim().min(1).max(100).optional(),

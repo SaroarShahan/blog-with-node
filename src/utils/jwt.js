@@ -16,7 +16,7 @@ exports.generateToken = async (payload) => {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(config.JWT_EXPIRES_IN || '7d')
+    .setExpirationTime(config.jwtExpiresIn || '7d')
     .sign(secretKey);
 };
 
@@ -26,7 +26,6 @@ exports.verifyToken = async (token) => {
 
   return {
     id: payload.id,
-    role: payload.role,
   };
 };
 
@@ -36,7 +35,6 @@ exports.decodeToken = async (token) => {
 
     return {
       id: payload.id,
-      role: payload.role,
     };
   } catch {
     return null;

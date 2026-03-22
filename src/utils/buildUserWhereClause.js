@@ -21,10 +21,8 @@ const buildUserWhereClause = (query) => {
     };
   }
 
-  if (query.role) {
-    whereClause.role = {
-      [Op.like]: `%${query.role}%`,
-    };
+  if (query.roleId) {
+    whereClause.roleId = query.roleId;
   }
 
   return whereClause;

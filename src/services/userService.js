@@ -1,12 +1,12 @@
 const bcrypt = require('bcrypt');
 
 const { getOffset } = require('../constants');
-const { UserModel, PostModel, ProfileModel } = require('../models');
+const { UserModel, PostModel, ProfileModel, RoleModel } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { buildUserWhereClause } = require('../utils/buildUserWhereClause');
 
 const createUser = asyncHandler(async (req, res) => {
-  const { username, email, password, gender, role } = req.body;
+  const { username, email, password, gender, roleId } = req.body;
   const existingUser = await UserModel.findOne({ where: { email } });
 
   if (existingUser) {
@@ -25,6 +25,17 @@ const createUser = asyncHandler(async (req, res) => {
     });
   }
 
+  const assignedRole = roleId
+    ? await RoleModel.findByPk(roleId)
+    : await RoleModel.findOne({ where: { id: 1 } });
+
+  if (!assignedRole) {
+    return res.status(400).json({
+      success: false,
+      message: 'Role not found!',
+    });
+  }
+
   const passwordHash = await bcrypt.hash(password, 12);
 
   const newUser = await UserModel.create({
@@ -32,11 +43,12 @@ const createUser = asyncHandler(async (req, res) => {
     email,
     password: passwordHash,
     gender,
-    role,
+    roleId: assignedRole.id,
   });
 
   const userWithoutPassword = await UserModel.findByPk(newUser.id, {
     attributes: { exclude: ['password'] },
+    include: [{ model: RoleModel, as: 'role', attributes: ['id', 'name'] }],
   });
 
   return res.status(201).json({
@@ -56,8 +68,11 @@ const getAllUsers = asyncHandler(async (req, res) => {
     attributes: { exclude: ['password'] },
     order: [['id', 'DESC']],
     offset: getOffset(page, limit),
-    limit: page && limit ? parseInt(limit) : undefined,
-    include: [{ model: ProfileModel, as: 'profile' }],
+    limit: page && limit ? parseInt(limit, 10) : undefined,
+    include: [
+      { model: ProfileModel, as: 'profile' },
+      { model: RoleModel, as: 'role', attributes: ['id', 'name'] },
+    ],
   });
 
   return res.status(200).json({
@@ -72,7 +87,10 @@ const getUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await UserModel.findByPk(id, {
     attributes: { exclude: ['password'] },
-    include: [{ model: ProfileModel, as: 'profile' }],
+    include: [
+      { model: ProfileModel, as: 'profile' },
+      { model: RoleModel, as: 'role', attributes: ['id', 'name'] },
+    ],
   });
 
   if (!user) {
@@ -107,7 +125,7 @@ const getUserPosts = asyncHandler(async (req, res) => {
           {
             model: UserModel,
             as: 'author',
-            attributes: ['id', 'firstName', 'lastName'],
+            attributes: ['id', 'username', 'email'],
           },
         ],
       },
@@ -143,17 +161,33 @@ const updateUser = asyncHandler(async (req, res) => {
     });
   }
 
+  if (payload.roleId) {
+    const assignedRole = await RoleModel.findByPk(payload.roleId);
+
+    if (!assignedRole) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role not found!',
+      });
+    }
+  }
+
   await user.update({
     username: payload.username ?? user.username,
     gender: payload.gender ?? user.gender,
-    role: payload.role ?? user.role,
+    roleId: payload.roleId ?? user.roleId,
     status: payload.status ?? user.status,
+  });
+
+  const updatedUser = await UserModel.findByPk(id, {
+    attributes: { exclude: ['password'] },
+    include: [{ model: RoleModel, as: 'role', attributes: ['id', 'name'] }],
   });
 
   return res.status(200).json({
     success: true,
     message: 'User has been updated successfully!',
-    data: user,
+    data: updatedUser,
   });
 });
 

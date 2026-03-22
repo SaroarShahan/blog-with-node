@@ -9,7 +9,7 @@ const registerSchema = {
       email: emailSchema,
       password: z.string().min(8).max(255),
       gender: z.enum(['male', 'female', 'other']),
-      role: z.enum(['user', 'admin']).optional(),
+      roleId: z.coerce.number().int().positive().optional(),
     })
     .strict(),
 };
