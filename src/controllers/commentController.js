@@ -36,7 +36,7 @@ exports.getCommentsByPost = (req, res) => {
  * @param {string} [req.body.status]
  * @param {Object} req.user
  * @param {number|string} req.user.id
- * @param {string} req.user.role
+ * @param {string|null} req.user.role
  * @param {Object} res
  */
 exports.updateComment = (req, res) => {
@@ -50,7 +50,7 @@ exports.updateComment = (req, res) => {
  * @param {string} req.params.id
  * @param {Object} req.user
  * @param {number|string} req.user.id
- * @param {string} req.user.role
+ * @param {string|null} req.user.role
  * @param {Object} res
  */
 exports.deleteComment = (req, res) => {
