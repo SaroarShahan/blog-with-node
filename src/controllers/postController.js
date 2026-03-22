@@ -61,7 +61,7 @@ exports.getPost = (req, res) => {
  * @param {Array<number|string>} [req.body.tagIds]
  * @param {Object} req.user
  * @param {number|string} req.user.id
- * @param {string} req.user.role
+ * @param {string|null} req.user.role
  * @param {Object} res
  */
 exports.updatePost = (req, res) => {
@@ -75,7 +75,7 @@ exports.updatePost = (req, res) => {
  * @param {string} req.params.idOrSlug
  * @param {Object} req.user
  * @param {number|string} req.user.id
- * @param {string} req.user.role
+ * @param {string|null} req.user.role
  * @param {Object} res
  */
 exports.deletePost = (req, res) => {
