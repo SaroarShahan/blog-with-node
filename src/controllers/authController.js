@@ -7,8 +7,8 @@ const authService = require('../services/authService');
  * @param {string} req.body.username
  * @param {string} req.body.email
  * @param {string} req.body.password
- * @param {string} [req.body.role]
  * @param {string} [req.body.gender]
+ * @param {number} [req.body.roleId]
  * @param {Object} res
  */
 exports.register = (req, res) => {
