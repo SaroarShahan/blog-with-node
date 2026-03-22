@@ -17,7 +17,7 @@ REST API for a blog application built with Express, Sequelize, MySQL, and JWT au
 
 - User registration and login
 - JWT-protected routes
-- Role-based admin middleware
+- RBAC with roles and permissions
 - Centralized request validation with Zod
 - Baseline API hardening with Helmet, CORS, and compression
 - Auth endpoint rate limiting for login/register
@@ -97,13 +97,18 @@ yarn db:migrate
 yarn db:seed
 ```
 
-Seeders add demo users, profiles, categories, tags, posts, post-category links, post-tag links, and
-comments.
+Seeders add demo roles, permissions, role-permission mappings, users, profiles, categories, tags,
+posts, post-category links, post-tag links, and comments.
 
 Demo accounts:
 
 - Admin: `saroar.shahan@gmail.com` / `Admin@1234`
 - User: `kuddus@example.com` / `User@1234`
+
+Default seeded roles:
+
+- `super_admin`
+- `user`
 
 ### 5. Start the server
 
@@ -234,7 +239,7 @@ yarn db:migrate
 yarn db:migrate:undo
 yarn db:migrate:undo:all
 yarn db:seed
-yarn db:seed:undo
+yarn db:seed:undo:all
 ```
 
 ## API Routes
@@ -246,46 +251,70 @@ Base URL: `/api/v1`
 - `POST /auth/register` (rate limited)
 - `POST /auth/login` (rate limited)
 
+`POST /auth/register` accepts:
+
+- `username`
+- `email`
+- `password`
+- `gender`
+- roleId
+
 ### Users
 
 - `GET /users/:userId/posts` (public)
-- `POST /users` (authenticated, admin only)
-- `GET /users` (authenticated, admin only)
-- `GET /users/:id` (authenticated, admin only)
-- `PATCH /users/:id` (authenticated, admin only)
-- `DELETE /users/:id` (authenticated, admin only)
-- `PATCH /users/:id/profile` (authenticated, admin only)
+- `POST /users` (authenticated, privileged)
+- `GET /users` (authenticated, privileged)
+- `GET /users/:id` (authenticated, privileged)
+- `PATCH /users/:id` (authenticated, privileged)
+- `DELETE /users/:id` (authenticated, privileged)
+- `PATCH /users/:id/profile` (authenticated, privileged)
 
 ### Posts
 
 - `POST /posts` (authenticated)
-- `GET /posts`
-- `GET /posts/:idOrSlug`
+- `GET /posts` (public)
+- `GET /posts/:idOrSlug` (public)
 - `PATCH /posts/:idOrSlug` (post author only)
 - `DELETE /posts/:idOrSlug` (post author or admin)
 
 ### Categories
 
-- `POST /categories` (authenticated, admin only)
+- `POST /categories` (authenticated, privileged)
 - `GET /categories` (public)
-- `GET /categories/:idOrSlug` (public)
-- `PATCH /categories/:idOrSlug` (authenticated, admin only)
-- `DELETE /categories/:idOrSlug` (authenticated, admin only)
+- `GET /categories/:idOrSlug` (authenticated, privileged)
+- `PATCH /categories/:idOrSlug` (authenticated, privileged)
+- `DELETE /categories/:idOrSlug` (authenticated, privileged)
 
 ### Tags
 
-- `POST /tags` (authenticated, admin only)
+- `POST /tags` (authenticated, privileged)
 - `GET /tags` (public)
-- `GET /tags/:idOrSlug` (public)
-- `PATCH /tags/:idOrSlug` (authenticated, admin only)
-- `DELETE /tags/:idOrSlug` (authenticated, admin only)
+- `GET /tags/:idOrSlug` (authenticated, privileged)
+- `PATCH /tags/:idOrSlug` (authenticated, privileged)
+- `DELETE /tags/:idOrSlug` (authenticated, privileged)
 
 ### Comments
 
 - `POST /comments` (authenticated)
 - `GET /comments/:postId` (authenticated)
 - `PATCH /comments/:id` (comment author only)
-- `DELETE /comments/:id` (admin, comment author, or post author)
+- `DELETE /comments/:id` (privileged user, comment author, or post author)
+
+### Permissions
+
+- `GET /permissions` (authenticated, requires permission access)
+
+Optional query:
+
+- `module`
+
+### Roles
+
+- `POST /roles` (authenticated, requires `create_role`)
+- `GET /roles` (authenticated, requires `view_roles`)
+- `GET /roles/:id` (authenticated, requires `view_role`)
+- `PATCH /roles/:id` (authenticated, requires `edit_role`)
+- `DELETE /roles/:id` (authenticated, requires `delete_role`)
 
 ## Health Check
 
@@ -303,12 +332,16 @@ Base URL: `/api/v1`
   authenticated).
 - Controllers delegate business logic to dedicated service modules under `src/services`.
 - Pre-commit checks are enforced by Husky + lint-staged (ESLint + Prettier on staged files).
-- User management routes are authenticated and admin-only.
-- Category and tag management routes are authenticated and admin-only.
+- Role and permission data are stored in `roles`, `permissions`, and `role_permissions`.
+- Auth middleware loads role permissions and attaches them to `req.user.permissions`.
+- The app now supports permission-based authorization middleware in addition to ownership checks.
+- User management routes are authenticated and privileged.
+- Category and tag management routes are authenticated and privileged.
 - Post updates are allowed only for the post author.
-- Post deletes are allowed for the post author or an admin.
+- Post deletes are allowed for the post author or a privileged user.
 - Comment updates are allowed only for the comment author.
-- Comment deletes are allowed for an admin, the comment author, or the author of the parent post.
+- Comment deletes are allowed for a privileged user, the comment author, or the author of the parent
+  post.
 - Database connection is verified during server startup before the app begins listening.
 - Sequelize config supports both `development` and `production`, which is required for the Docker
   container because it runs with `NODE_ENV=production`.
