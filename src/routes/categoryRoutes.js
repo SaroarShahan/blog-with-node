@@ -17,17 +17,28 @@ const { hasPermission } = require('../middleware/authorize');
 
 const router = express.Router();
 
-router.use(authenticateToken);
-
 router
   .route('/')
-  .post([hasPermission('create_category'), validate(createCategorySchema)], createCategory)
+  .post(
+    [authenticateToken, hasPermission('create_category'), validate(createCategorySchema)],
+    createCategory,
+  )
   .get([hasPermission('view_categories')], getAllCategories);
 
 router
   .route('/:idOrSlug')
-  .get([hasPermission('view_category')], validate(getCategorySchema), getCategory)
-  .patch([hasPermission('edit_category'), validate(updateCategorySchema)], updateCategory)
-  .delete([hasPermission('delete_category'), validate(deleteCategorySchema)], deleteCategory);
+  .get(
+    [authenticateToken, hasPermission('view_category')],
+    validate(getCategorySchema),
+    getCategory,
+  )
+  .patch(
+    [authenticateToken, hasPermission('edit_category'), validate(updateCategorySchema)],
+    updateCategory,
+  )
+  .delete(
+    [authenticateToken, hasPermission('delete_category'), validate(deleteCategorySchema)],
+    deleteCategory,
+  );
 
 module.exports = router;

@@ -18,17 +18,15 @@ const { hasPermission } = require('../middleware/authorize');
 
 const router = express.Router();
 
-router.use(authenticateToken);
-
 router
   .route('/')
-  .post([hasPermission('create_tag'), validate(createTagSchema)], createTag)
+  .post([authenticateToken, hasPermission('create_tag'), validate(createTagSchema)], createTag)
   .get(hasPermission('view_tags'), getAllTags);
 
 router
   .route('/:idOrSlug')
-  .get(hasPermission('view_tag'), validate(getTagSchema), getTag)
-  .patch([hasPermission('edit_tag'), validate(updateTagSchema)], updateTag)
-  .delete([hasPermission('delete_tag'), validate(deleteTagSchema)], deleteTag);
+  .get([authenticateToken, hasPermission('view_tag'), validate(getTagSchema)], getTag)
+  .patch([authenticateToken, hasPermission('edit_tag'), validate(updateTagSchema)], updateTag)
+  .delete([authenticateToken, hasPermission('delete_tag'), validate(deleteTagSchema)], deleteTag);
 
 module.exports = router;
