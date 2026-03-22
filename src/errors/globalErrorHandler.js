@@ -1,4 +1,5 @@
 const AppError = require('./appError');
+const logger = require('../utils/logger');
 
 const sendErrorDev = (error, res) => {
   const statusCode = error.statusCode || 500;
@@ -18,7 +19,7 @@ const sendErrorDev = (error, res) => {
   });
 };
 
-const sendErrorProd = (error, res) => {
+const sendErrorProd = (error, req, res) => {
   const statusCode = error.statusCode || 500;
   const status = error.status || false;
   const message = error.message || "It's not you, it's us!";
@@ -36,15 +37,28 @@ const sendErrorProd = (error, res) => {
     });
   }
 
-  console.log(error.name, error.message, stack);
+  const requestLogger = req?.log || logger;
+
+  requestLogger.error(
+    {
+      err: error,
+      stack,
+    },
+    'Unhandled application error',
+  );
+
   return res.status(500).json({
     status: 'error',
     message,
   });
 };
 
-const globalErrorHandler = (err, _, res, _next) => {
-  if (err.name === 'JWSSignatureVerificationFailed') {
+const globalErrorHandler = (err, req, res, _next) => {
+  if (
+    err.name === 'JWSSignatureVerificationFailed' ||
+    err.name === 'JWTExpired' ||
+    err.name === 'JWTClaimValidationFailed'
+  ) {
     err = new AppError('Invalid or expired token', 401);
   }
 
@@ -58,7 +72,7 @@ const globalErrorHandler = (err, _, res, _next) => {
     return sendErrorDev(err, res);
   }
 
-  return sendErrorProd(err, res);
+  return sendErrorProd(err, req, res);
 };
 
 module.exports = globalErrorHandler;
