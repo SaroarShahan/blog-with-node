@@ -8,7 +8,7 @@ const userService = require('../services/userService');
  * @param {string} req.body.email
  * @param {string} req.body.password
  * @param {string} [req.body.gender]
- * @param {string} [req.body.role]
+ * @param {number} [req.body.roleId]
  * @param {Object} res
  */
 exports.createUser = (req, res) => {
@@ -23,7 +23,7 @@ exports.createUser = (req, res) => {
  * @param {string} [req.query.limit]
  * @param {string} [req.query.search]
  * @param {string} [req.query.status]
- * @param {string} [req.query.role]
+ * @param {number} [req.query.roleId]
  * @param {Object} res
  */
 exports.getAllUsers = (req, res) => {
@@ -60,7 +60,7 @@ exports.getUserPosts = (req, res) => {
  * @param {Object} req.body
  * @param {string} [req.body.username]
  * @param {string} [req.body.gender]
- * @param {string} [req.body.role]
+ * @param {number} [req.body.roleId]
  * @param {string} [req.body.status]
  * @param {Object} res
  */
