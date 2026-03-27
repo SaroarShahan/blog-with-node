@@ -15,9 +15,7 @@ const register = asyncHandler(async (req, res) => {
     });
   }
 
-  const existingRole = roleId
-    ? await RoleModel.findByPk(roleId)
-    : await RoleModel.findOne({ where: { id: 1 } });
+  const existingRole = await RoleModel.findByPk(roleId);
 
   if (!existingRole) {
     return res.status(400).json({
