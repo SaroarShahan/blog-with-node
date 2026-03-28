@@ -45,6 +45,10 @@ const updatePostSchema = {
     .strict(),
 };
 
+const publishPostSchema = {
+  params: idOrSlugParamSchema,
+};
+
 const deletePostSchema = {
   params: idOrSlugParamSchema,
 };
@@ -54,5 +58,6 @@ module.exports = {
   deletePostSchema,
   getPostSchema,
   getPostsSchema,
+  publishPostSchema,
   updatePostSchema,
 };

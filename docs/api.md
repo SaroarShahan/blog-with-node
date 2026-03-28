@@ -31,6 +31,7 @@ Base URL: `/api/v1`
 - `GET /posts`
 - `GET /posts/:idOrSlug`
 - `PATCH /posts/:idOrSlug` (post author only)
+- `PATCH /posts/:idOrSlug/publish` (post author only)
 - `DELETE /posts/:idOrSlug` (post author or privileged user)
 
 ## Categories

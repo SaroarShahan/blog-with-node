@@ -69,6 +69,20 @@ exports.updatePost = (req, res) => {
 };
 
 /**
+ * Publish a post by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string|null} req.user.role
+ * @param {Object} res
+ */
+exports.publishPost = (req, res) => {
+  return postService.publishPost(req, res);
+};
+
+/**
  * Delete a post by ID or slug.
  * @param {Object} req
  * @param {Object} req.params

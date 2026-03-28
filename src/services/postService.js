@@ -63,6 +63,25 @@ const getAllPosts = asyncHandler(async (req, res) => {
   const query = req.query;
   const { page, limit, category, tag } = query;
   const whereClause = buildPostWhereClause(query);
+  const userId = req.user?.id;
+  const andConditions = [];
+
+  if (whereClause[Op.or]) {
+    andConditions.push({ [Op.or]: whereClause[Op.or] });
+    delete whereClause[Op.or];
+  }
+
+  if (!query.status) {
+    andConditions.push({
+      [Op.or]: [{ status: 'published' }, ...(userId ? [{ status: 'draft', userId }] : [])],
+    });
+  } else if (query.status !== 'published') {
+    andConditions.push({ userId: userId ?? null });
+  }
+
+  if (andConditions.length) {
+    whereClause[Op.and] = andConditions;
+  }
 
   const { rows, count } = await PostModel.findAndCountAll({
     distinct: true,
@@ -165,6 +184,13 @@ const getPost = asyncHandler(async (req, res) => {
     });
   }
 
+  if (post.status !== 'published' && userId !== post.userId) {
+    return res.status(404).json({
+      success: false,
+      message: 'Post not found!',
+    });
+  }
+
   if (userId !== post.userId) {
     await post.increment('viewCount');
   }
@@ -245,6 +271,49 @@ const updatePost = asyncHandler(async (req, res) => {
     success: true,
     message: 'Post updated successfully',
     data: updatedPost,
+  });
+});
+
+const publishPost = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+  const user = req.user;
+  const post = await findPostByIdOrSlug(idOrSlug);
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: 'Post not found!',
+    });
+  }
+
+  const canEditResult = canEdit(user, post.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
+
+  if (!canEditResult) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to publish this post',
+    });
+  }
+
+  if (post.status !== 'published') {
+    await post.update({
+      status: 'published',
+      publishedAt: post.publishedAt || new Date(),
+    });
+  }
+
+  const publishedPost = await PostModel.findByPk(post.id, {
+    include: [
+      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
+      { model: CategoryModel, as: 'categories', through: { attributes: [] } },
+      { model: TagModel, as: 'tags', through: { attributes: [] } },
+    ],
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Post has been published successfully',
+    data: publishedPost,
   });
 });
 
@@ -379,5 +448,6 @@ module.exports = {
   getCategoryWithPosts,
   getPost,
   getPostsByCategory,
+  publishPost,
   updatePost,
 };
