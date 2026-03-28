@@ -14,7 +14,7 @@ module.exports = {
         content:
           'This post covers project structure, model associations, migrations, authentication, and pragmatic controller patterns for a blog API built with Express and Sequelize.',
         user_id: 1,
-        status: 'published',
+        status: 'draft',
         view_count: 24,
         published_at: now,
         created_at: now,
@@ -28,7 +28,7 @@ module.exports = {
         content:
           'Categories and tags serve different purposes. This article shows how to model both with Sequelize belongsToMany associations and keep API responses predictable.',
         user_id: 2,
-        status: 'published',
+        status: 'draft',
         view_count: 13,
         published_at: now,
         created_at: now,
