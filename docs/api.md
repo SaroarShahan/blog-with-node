@@ -28,10 +28,11 @@ Base URL: `/api/v1`
 ## Posts
 
 - `POST /posts` (authenticated)
-- `GET /posts`
-- `GET /posts/:idOrSlug`
+- `GET /posts` (authenticated)
+- `GET /posts/:idOrSlug` (authenticated)
 - `PATCH /posts/:idOrSlug` (post author only)
 - `PATCH /posts/:idOrSlug/publish` (post author only)
+- `PATCH /posts/:idOrSlug/draft` (post author only)
 - `DELETE /posts/:idOrSlug` (post author or privileged user)
 
 ## Categories

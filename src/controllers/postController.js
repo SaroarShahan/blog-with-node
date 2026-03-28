@@ -83,6 +83,20 @@ exports.publishPost = (req, res) => {
 };
 
 /**
+ * Move a post back to draft by ID or slug.
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.idOrSlug
+ * @param {Object} req.user
+ * @param {number|string} req.user.id
+ * @param {string|null} req.user.role
+ * @param {Object} res
+ */
+exports.draftPost = (req, res) => {
+  return postService.draftPost(req, res);
+};
+
+/**
  * Delete a post by ID or slug.
  * @param {Object} req
  * @param {Object} req.params

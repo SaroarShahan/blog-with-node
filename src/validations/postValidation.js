@@ -49,6 +49,10 @@ const publishPostSchema = {
   params: idOrSlugParamSchema,
 };
 
+const draftPostSchema = {
+  params: idOrSlugParamSchema,
+};
+
 const deletePostSchema = {
   params: idOrSlugParamSchema,
 };
@@ -56,6 +60,7 @@ const deletePostSchema = {
 module.exports = {
   createPostSchema,
   deletePostSchema,
+  draftPostSchema,
   getPostSchema,
   getPostsSchema,
   publishPostSchema,

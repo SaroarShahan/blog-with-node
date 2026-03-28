@@ -317,6 +317,48 @@ const publishPost = asyncHandler(async (req, res) => {
   });
 });
 
+const draftPost = asyncHandler(async (req, res) => {
+  const { idOrSlug } = req.params;
+  const user = req.user;
+  const post = await findPostByIdOrSlug(idOrSlug);
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: 'Post not found!',
+    });
+  }
+
+  const canEditResult = canEdit(user, post.userId, AUTHORIZATION_POLICIES.OWNER_ONLY);
+
+  if (!canEditResult) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to draft this post',
+    });
+  }
+
+  if (post.status !== 'draft') {
+    await post.update({
+      status: 'draft',
+    });
+  }
+
+  const draftedPost = await PostModel.findByPk(post.id, {
+    include: [
+      { model: UserModel, as: 'author', attributes: ['id', 'username', 'email'] },
+      { model: CategoryModel, as: 'categories', through: { attributes: [] } },
+      { model: TagModel, as: 'tags', through: { attributes: [] } },
+    ],
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Post has been moved to draft successfully',
+    data: draftedPost,
+  });
+});
+
 const deletePost = asyncHandler(async (req, res) => {
   const { idOrSlug } = req.params;
   const user = req.user;
@@ -444,6 +486,7 @@ const getCategoryWithPosts = asyncHandler(async (req, res) => {
 module.exports = {
   createPost,
   deletePost,
+  draftPost,
   getAllPosts,
   getCategoryWithPosts,
   getPost,

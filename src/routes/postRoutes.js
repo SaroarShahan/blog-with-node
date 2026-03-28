@@ -7,11 +7,13 @@ const {
   getPost,
   updatePost,
   publishPost,
+  draftPost,
   deletePost,
 } = require('../controllers/postController');
 const {
   createPostSchema,
   deletePostSchema,
+  draftPostSchema,
   getPostSchema,
   getPostsSchema,
   publishPostSchema,
@@ -29,6 +31,10 @@ router
 router
   .route('/:idOrSlug/publish')
   .patch([authenticateToken, hasPermission('edit_post'), validate(publishPostSchema)], publishPost);
+
+router
+  .route('/:idOrSlug/draft')
+  .patch([authenticateToken, hasPermission('edit_post'), validate(draftPostSchema)], draftPost);
 
 router
   .route('/:idOrSlug')
